@@ -12,22 +12,22 @@ export default defineNuxtConfig({
         {src: '~/plugins/bootstrap.client.ts', mode: 'client'},
         {src: '~/plugins/fontawesome.ts', mode: 'client'}],
     modules: ['@vesp/nuxt-fontawesome',
-              '@pinia/nuxt',
+        '@pinia/nuxt',
     ],
 
     nitro: {
         devProxy: {
-          '/api': {
-            target: 'http://localhost:3080',
-            changeOrigin: true,
-          }
+            '/api': {
+                target: 'http://localhost:3080',
+                changeOrigin: true,
+            }
         }
-      },
+    },
     runtimeConfig: {
         public: {
-          apiBase: process.env.API_BASE_URL || 'http://localhost:3080'
+            apiBase: process.env.API_BASE_URL || 'http://localhost:3080', bearerToken: process.env.BEARER_TOKEN,
         }
-      },
-    
-      pages: true, 
+    },
+
+    pages: true,
 })
