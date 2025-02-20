@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reminder-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: reminder-app
+  template:
+    metadata:
+      labels:
+        app: reminder-app
+    spec:
+      containers:
+        - name: reminder-app
+          image: reminder_app
+          ports:
+            - containerPort: 3000
