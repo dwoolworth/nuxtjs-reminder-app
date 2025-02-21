@@ -1,9 +1,10 @@
 <script setup>
 import { reactive } from 'vue'
 import { useRouter } from 'vue-router'
+const router = useRouter()
+
 import { useAuthStore } from '~/store/auth'  // Assuming you have this store
 
-const router = useRouter()
 const authStore = useAuthStore()
 
 const loginForm = reactive({

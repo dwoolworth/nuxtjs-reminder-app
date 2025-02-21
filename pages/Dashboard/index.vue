@@ -1,6 +1,16 @@
 <script setup>
 import {ref, reactive} from "vue";
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
+import {onMounted} from 'vue';
+import {useRouter} from 'vue-router'
+
+const router = useRouter()
+import {useAuthStore} from "~/store/auth.js";
+
+const config = useRuntimeConfig()
+const apiBaseUrl = config.public.apiBase || 'http://localhost:3080'
+const token = useCookie("token")
+const bearerToken = config.public.bearerToken || token.value
 
 const inpirationMessage = reactive({
   data: [
@@ -49,11 +59,51 @@ const inpirationMessage = reactive({
   ],
 })
 const dateAndTime = ref("21/02/2025 - 9:34 AM");
+const errorMessage = ref('')
+const isLoading = ref(false)
+const authStore = useAuthStore();
+const position = reactive({
+  latitude: 0,
+  longitude: 0
+})
+
+const formSubmit = async () => {
+
+  navigator.geolocation.getCurrentPosition(position => {
+    console.log("position-----", position);
+    let {
+      latitude, longitude
+    } = position.coords;
+    console.log("latitude,   longitude----", latitude, longitude)
+  })
+
+  console.log("dashboard.............");
+
+  errorMessage.value = ''
+  isLoading.value = true
+  try {
+    await authStore.allReminder();
+    await authStore.currentWeather();
+
+    // router.push("/home")
+  } catch (error) {
+    console.error("Login failed", error)
+    errorMessage.value = error.message || 'Login failed. Please check your credentials and try again.'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(() => {
+  formSubmit();
+})
+
 
 </script>
 
 <template>
   <Headers/>
+  <button @click="formSubmit"> clck me</button>
   <div class="p-4">
     <div class="d-flex gap-5">
       <div class="w-50">

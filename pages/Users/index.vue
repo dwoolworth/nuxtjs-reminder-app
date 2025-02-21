@@ -181,7 +181,7 @@ const editUser = async (user: {
     const response = await fetch(`${apiBaseUrl}/api/v1/user/${user._id}`, {
       method: 'PUT',
       headers: {
-        Authorization: `Bearer ${bearerToken}`,
+        'Authorization': `Bearer ${bearerToken}`,
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },

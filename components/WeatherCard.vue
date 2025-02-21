@@ -5,45 +5,51 @@
         <div class="row">
           <div class="col-md-12">
 
-            <div v-if="weather" class="d-flex justify-content-start align-items-start">  <div class="grid-container">
-              <div class="grid-item">
-                <span class="temp-display">{{ weather.main.temp }}°F</span>
-                <div class="feels-like-sunrise-sunset">
-                  <span class="feels-like">Feels like: <strong>{{ weather.main.feels_like }}°F </strong></span><br>
-                  <div class="sunrise-sunset-times">
-                    <span class="sunrise">Sunrise: <strong>{{ formatTime24(weather.sys.sunrise) }} {{ amPm(weather.sys.sunrise) }} </strong></span>
+            <div v-if="weather" class="d-flex justify-content-start align-items-start">
+              <div class="grid-container">
+                <div class="grid-item">
+                  <span class="temp-display">{{ weather.main.temp }}°F</span>
+                  <div class="feels-like-sunrise-sunset">
+                    <span class="feels-like">Feels like: <strong>{{ weather.main.feels_like }}°F </strong></span><br>
+                    <div class="sunrise-sunset-times">
+                      <span class="sunrise">Sunrise: <strong>{{
+                          formatTime24(weather.sys.sunrise)
+                        }} {{ amPm(weather.sys.sunrise) }} </strong></span>
 
-                    <img src="@/assets/img/weather_chart.png" alt="Image" class="inspiration-image small-image">
-                    <span class="sunset">Sunset: <strong>{{ formatTime24(weather.sys.sunset) }} {{ amPm(weather.sys.sunset) }} </strong></span>
+                      <img src="@/assets/img/weather_chart.png" alt="Image" class="inspiration-image small-image">
+                      <span class="sunset">Sunset: <strong>{{
+                          formatTime24(weather.sys.sunset)
+                        }} {{ amPm(weather.sys.sunset) }} </strong></span>
+                    </div>
+                  </div>
+                </div>
+                <div class="grid-item">
+                  <span class="city">{{ weather.name }}</span><br>
+                  <img :src="weatherIcon" alt="Weather Icon" class="weather-icon-large rounded-circle mb-2"><br>
+                  <span class="description">{{ weather.weather[0].description }}</span>
+                </div>
+
+
+                <div class="grid-item">
+
+                  <div v-for="(day, index) in forecast" :key="index">
+                    <div class="grid-container-forecast">
+                      <div class="grid-item-forecast">
+                        <img :src="`https://openweathermap.org/img/wn/${day.weather[0].icon}@2x.png`"
+                             alt="Forecast Icon" class="forecast-icon">
+                      </div>
+                      <!-- <span class="forecast-temp">{{ getForecastTemp(day) }}/{{ getForecastFeelsLike(day) }}°F</span>-->
+                      <span class="forecast-temp">{{ getForecastTemp(day) }}°F</span>
+
+
+                      <div class="grid-item-forecast">
+                        <span class="forecast-day">{{ formatForecastDate(day.dt, index) }}</span>
+                      </div>
+
+                    </div>
                   </div>
                 </div>
               </div>
-              <div class="grid-item">
-                <span class="city">{{ weather.name }}</span><br>
-                <img :src="weatherIcon" alt="Weather Icon" class="weather-icon-large rounded-circle mb-2"><br>
-                <span class="description">{{ weather.weather[0].description }}</span>
-              </div>
-
-
-              <div class="grid-item">
-
-                <div v-for="(day, index) in forecast" :key="index">
-                  <div class="grid-container-forecast">
-                    <div class="grid-item-forecast">
-                      <img :src="`https://openweathermap.org/img/wn/${day.weather[0].icon}@2x.png`" alt="Forecast Icon" class="forecast-icon">
-                    </div>
-                   <!-- <span class="forecast-temp">{{ getForecastTemp(day) }}/{{ getForecastFeelsLike(day) }}°F</span>-->
-                    <span class="forecast-temp">{{ getForecastTemp(day) }}°F</span>
-
-
-                    <div class="grid-item-forecast">
-                      <span class="forecast-day">{{ formatForecastDate(day.dt, index) }}</span>
-                    </div>
-
-                  </div>
-                </div>
-              </div>
-            </div>
             </div>
           </div>
 
@@ -86,11 +92,13 @@ export default {
   mounted() {
     this.updateTime();
     navigator.geolocation.getCurrentPosition(position => {
-      const { latitude, longitude } = position.coords;
+      const {latitude, longitude} = position.coords;
       const apiKey = '56da4a21c8f2a9804194202b7cb98201';
       const city = 'New York'
-     // const weatherApiUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&units=imperial&appid=${apiKey}`;
-     // const forecastApiUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${latitude}&lon=${longitude}&units=imperial&appid=${apiKey}`;
+      console.log("longitude------", longitude)
+      console.log("longitude----------", longitude)
+      // const weatherApiUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&units=imperial&appid=${apiKey}`;
+      // const forecastApiUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${latitude}&lon=${longitude}&units=imperial&appid=${apiKey}`;
 
       const weatherApiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=imperial&appid=${apiKey}`;
       const forecastApiUrl = `https://api.openweathermap.org/data/2.5/forecast?q=${city}&units=imperial&appid=${apiKey}`;
@@ -132,20 +140,19 @@ export default {
   },
   methods: {
     formatDate(timestamp) {
-      const options = { month: 'short', day: 'numeric' }; // Simplified date format
+      const options = {month: 'short', day: 'numeric'}; // Simplified date format
       return new Date(timestamp * 1000).toLocaleDateString('en-US', options);
     },
-    formatForecastDate(timestamp, index)
-    {
+    formatForecastDate(timestamp, index) {
       const date = new Date(timestamp * 1000);
-      const month = date.toLocaleDateString('en-US', { month: '2-digit' }); // Two-digit month
+      const month = date.toLocaleDateString('en-US', {month: '2-digit'}); // Two-digit month
       const dayNum = date.getDate(); // Day of the month
 
       if (index === 0) {
         return `Tomorrow, ${dayNum}/${month}`;
       } else {
 
-        const day = date.toLocaleDateString('en-US', { weekday: 'long' }); // Short day name
+        const day = date.toLocaleDateString('en-US', {weekday: 'long'}); // Short day name
 
         return `${day}, ${dayNum}/${month}`; // Day, DD/MM format
       }
@@ -180,48 +187,49 @@ export default {
       return hours < 12 || hours === 24 ? "AM" : "PM";
     },
     dayOfWeek(timestamp) {
-      const options = { weekday: 'long' };
+      const options = {weekday: 'long'};
       return new Date(timestamp * 1000).toLocaleDateString('en-US', options);
     },
-    fetchMotivationalMessage(weatherData)
-  {
-    const weatherCondition = weatherData.weather[0].description;
-    const groqApiUrl = 'https://api.groq.com/openai/v1/chat/completions';
+    fetchMotivationalMessage(weatherData) {
+      const weatherCondition = weatherData.weather[0].description;
+      const groqApiUrl = 'https://api.groq.com/openai/v1/chat/completions';
 
-    console.log('Fetching motivational message from:', groqApiUrl);
-    console.log('Weather condition:', weatherCondition);
+      console.log('Fetching motivational message from:', groqApiUrl);
+      console.log('Weather condition:', weatherCondition);
 
-    fetch(groqApiUrl,
+      fetch(groqApiUrl,
           {
-                 method: 'POST',
-                 headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': 'Bearer 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' // Replace with your actual Groq API key
-                         },
-                 body: JSON.stringify(
-                                {
-                                        model: "llama3-8b-8192", // Use a valid model from Groq API
-                                        messages: [
-                                                    { role: "system", content: "You are a helpful assistant providing motivational health messages." },
-                                                    { role: "user", content: `The weather today is ${weatherCondition}, Create a short, inspirational/uplifting message that reflects this weather and encourages a positive mindset and healthy habits.` } ],
-                                        max_tokens: 250,
-                                        temperature: 0.7,
-                                        top_p: 0.95
-                                      })
-            })
-        .then(response => response.json())
-        .then(data => { console.log('Motivational message response:', data); // Check if choices exist in the response
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer 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' // Replace with your actual Groq API key
+            },
+            body: JSON.stringify(
+                {
+                  model: "llama3-8b-8192", // Use a valid model from Groq API
+                  messages: [
+                    {role: "system", content: "You are a helpful assistant providing motivational health messages."},
+                    {
+                      role: "user",
+                      content: `The weather today is ${weatherCondition}, Create a short, inspirational/uplifting message that reflects this weather and encourages a positive mindset and healthy habits.`
+                    }],
+                  max_tokens: 250,
+                  temperature: 0.7,
+                  top_p: 0.95
+                })
+          })
+          .then(response => response.json())
+          .then(data => {
+            console.log('Motivational message response:', data); // Check if choices exist in the response
 
-          if (data.choices && data.choices.length > 0)
-          {
-            this.motivationMessage = data.choices[0].message.content.trim();
-          }
-          else
-          {
-            this.motivationMessage = "Stay positive and take care of your health!"; }
-        }) .catch(error => console.error('Error fetching motivational message:', error));
+            if (data.choices && data.choices.length > 0) {
+              this.motivationMessage = data.choices[0].message.content.trim();
+            } else {
+              this.motivationMessage = "Stay positive and take care of your health!";
+            }
+          }).catch(error => console.error('Error fetching motivational message:', error));
+    }
   }
-}
 
 }
 </script>
@@ -286,7 +294,6 @@ export default {
 }
 
 
-
 .inspiration-content {
   text-align: center;
 }
@@ -313,7 +320,7 @@ export default {
 
 .sunrise, .sunset {
   margin-bottom: 2px; /* Add some spacing between elements */
-  align:right;
+  align: right;
 }
 
 .city {
@@ -384,6 +391,7 @@ export default {
   text-align: center;
   padding: 10px;
 }
+
 .grid-item.card { /* Target the grid items that are also cards */
   border: 1px solid #ccc; /* Add a border to the cards */
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1); /* Add a subtle shadow */
@@ -437,11 +445,11 @@ export default {
 
 .inspiration-container {
   display: flex;
-  align-items: center;  /* Vertically align */
+  align-items: center; /* Vertically align */
   justify-content: space-between; /* Distribute space between */
   width: 100%; /* Ensure full width */
-  padding-left:20px;
-  padding-right:20px;
+  padding-left: 20px;
+  padding-right: 20px;
   padding-bottom: 20px;
   background-color: lightgray;
 }
@@ -513,7 +521,7 @@ export default {
   border-left: 2px solid #ccc; /* Add right border */
 }
 
-.reminders-container {  /* Styles for the reminders container */
+.reminders-container { /* Styles for the reminders container */
   width: 50%; /* Takes 50% width */
   height: 100%;
   padding: 20px;
@@ -538,6 +546,7 @@ export default {
   align-items: flex-start;
   box-sizing: border-box;
 }
+
 .right-content {
   width: 50%;
   height: 100%;
