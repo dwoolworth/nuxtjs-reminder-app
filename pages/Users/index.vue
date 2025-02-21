@@ -46,8 +46,10 @@ const error = ref<Error | null>(null)
 
 const config = useRuntimeConfig()
 const apiBaseUrl = config.public.apiBase || 'http://localhost:3080'
-const token = useCookie("token")
-const bearerToken = config.public.bearerToken || token.value
+    // Get the token from the cookie
+    const tokenCookie = useCookie('token')
+    const bearerToken = tokenCookie.value
+//const bearerToken = config.public.bearerToken || ''
 
 if (!bearerToken) {
   console.error('Bearer token is not defined')
@@ -60,6 +62,7 @@ const fetchUsers = async () => {
   console.log("bearerToken-----", bearerToken);
 
   try {
+    const config = useRuntimeConfig()
     const response = await fetch(`${apiBaseUrl}/api/v1/user`, {
       method: 'GET',
       headers: {
