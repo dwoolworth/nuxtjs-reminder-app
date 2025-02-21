@@ -47,6 +47,9 @@ if (!bearerToken) {
 const fetchUsers = async () => {
   pending.value = true
   error.value = null
+
+  console.log("bearerToken-----",bearerToken);
+
   try {
     const response = await fetch(`${apiBaseUrl}/api/v1/user`, {
       method: 'GET',
