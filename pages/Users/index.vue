@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref, reactive, computed, watch } from 'vue'
+import {ref, reactive, computed, watch} from 'vue'
 import Headers from "../../components/Headers"
-import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome"
-import { useFetch } from '#app'
-import type { User, UserApiResponse } from '~/types/user'
+import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome"
+import {useFetch} from '#app'
+import type {User, UserApiResponse} from '~/types/user'
 
 const components = {
   Headers
@@ -14,7 +14,15 @@ interface UserData {
   createEditModel: boolean;
   deleteModel: boolean;
   modelType: string;
-  modelData: { _id?: string; firstName: string; lastName: string; email: string; password?: string; phoneNumber?: string; role?: string };
+  modelData: {
+    _id?: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    password?: string;
+    phoneNumber?: string;
+    role?: string
+  };
 }
 
 const userData: UserData = reactive({
@@ -38,7 +46,8 @@ const error = ref<Error | null>(null)
 
 const config = useRuntimeConfig()
 const apiBaseUrl = config.public.apiBase || 'http://localhost:3080'
-const bearerToken = config.public.bearerToken || ''
+const token = useCookie("token")
+const bearerToken = config.public.bearerToken || token.value
 
 if (!bearerToken) {
   console.error('Bearer token is not defined')
@@ -48,7 +57,7 @@ const fetchUsers = async () => {
   pending.value = true
   error.value = null
 
-  console.log("bearerToken-----",bearerToken);
+  console.log("bearerToken-----", bearerToken);
 
   try {
     const response = await fetch(`${apiBaseUrl}/api/v1/user`, {
@@ -81,7 +90,15 @@ onMounted(() => {
   fetchUsers();
 });
 
-const changeModel = (data: string, user?: { _id?: string; firstName: string; lastName: string; email: string; password?: string; phoneNumber?: string; role?: string }) => {
+const changeModel = (data: string, user?: {
+  _id?: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  password?: string;
+  phoneNumber?: string;
+  role?: string
+}) => {
   userData.modelType = data;
   userData.createEditModel = !userData.createEditModel;
   console.log("data-----", data);
@@ -122,7 +139,15 @@ const saveModel = async (e: Event) => {
 }
 
 
-const addUser = async (user: { _id?: string; firstName: string; lastName: string; email: string; password?: string; phoneNumber?: string; role?: string }) => {
+const addUser = async (user: {
+  _id?: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  password?: string;
+  phoneNumber?: string;
+  role?: string
+}) => {
   try {
     const response = await fetch(`${apiBaseUrl}/api/v1/user`, {
       method: 'POST',
@@ -143,7 +168,15 @@ const addUser = async (user: { _id?: string; firstName: string; lastName: string
   }
 };
 
-const editUser = async (user: { _id?: string; firstName: string; lastName?: string; email: string; password?: string; phoneNumber?: string; role?: string }) => {
+const editUser = async (user: {
+  _id?: string;
+  firstName: string;
+  lastName?: string;
+  email: string;
+  password?: string;
+  phoneNumber?: string;
+  role?: string
+}) => {
   try {
     const response = await fetch(`${apiBaseUrl}/api/v1/user/${user._id}`, {
       method: 'PUT',
@@ -235,24 +268,24 @@ const deleteUser = async (_id: string) => {
         <div>
           <div class="mt-2 d-flex flex-column">
             <label>First Name</label>
-            <input type="text" v-model="userData.modelData.firstName" />
+            <input type="text" v-model="userData.modelData.firstName"/>
           </div>
           <div class="mt-2 d-flex flex-column">
             <label>Last Name</label>
-            <input type="text" v-model="userData.modelData.lastName" />
+            <input type="text" v-model="userData.modelData.lastName"/>
           </div>
           <div class="mt-2 d-flex flex-column">
             <label>Email</label>
-            <input type="email" v-model="userData.modelData.email" />
+            <input type="email" v-model="userData.modelData.email"/>
           </div>
           <div v-if="userData.modelType === 'create'">
             <div class="mt-2 d-flex flex-column">
               <label>Password</label>
-              <input type="password" v-model="userData.modelData.password" />
+              <input type="password" v-model="userData.modelData.password"/>
             </div>
             <div class="mt-2 d-flex flex-column">
               <label>Phone Number</label>
-              <input type="text" v-model="userData.modelData.phoneNumber" />
+              <input type="text" v-model="userData.modelData.phoneNumber"/>
             </div>
             <div class="mt-2 d-flex flex-column">
               <label>Role</label>
