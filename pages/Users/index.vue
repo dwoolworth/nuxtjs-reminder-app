@@ -1,9 +1,17 @@
 <script setup lang="ts">
-import {ref, reactive, computed, watch} from 'vue'
-import Headers from "../../components/Headers"
-import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome"
-import {useFetch} from '#app'
-import type {User, UserApiResponse} from '~/types/user'
+import { ref, reactive } from 'vue'
+import Headers from "../../components/Headers/index.vue"
+import UserList from "../../components/Users/UserList.vue"
+import UserForm from "../../components/Users/UserForm.vue"
+import { useRuntimeConfig } from '#app'
+import { useCookie } from '#app'
+import type { User, UserApiResponse } from '~/types/user'
+import { onMounted } from 'vue'
+
+import { definePageMeta } from '#imports'
+definePageMeta({
+  middleware: 'auth'
+})
 
 const components = {
   Headers
@@ -42,7 +50,7 @@ const userData: UserData = reactive({
 })
 
 const pending = ref(false)
-const error = ref<Error | null>(null)
+const error = ref<Record<string, any> | undefined | null>(undefined)
 
 const config = useRuntimeConfig()
 const apiBaseUrl = config.public.apiBase || 'http://localhost:3080'
@@ -95,8 +103,9 @@ onMounted(() => {
 
 const changeModel = (data: string, user?: {
   _id?: string;
-  firstName: string;
-  lastName: string;
+  name?: string;
+  firstName?: string;
+  lastName?: string;
   email: string;
   password?: string;
   phoneNumber?: string;
@@ -104,10 +113,18 @@ const changeModel = (data: string, user?: {
 }) => {
   userData.modelType = data;
   userData.createEditModel = !userData.createEditModel;
-  console.log("data-----", data);
 
   if (user) {
-    userData.modelData = user
+    const [firstName, lastName] = (user.name || '').split(' ');
+    userData.modelData = {
+      _id: user._id,
+      firstName: firstName || user.firstName || '',
+      lastName: lastName || user.lastName || '',
+      email: user.email,
+      password: user.password || '',
+      phoneNumber: user.phoneNumber || '',
+      role: user.role || ''
+    };
   } else {
     userData.modelData = {
       _id: undefined,
@@ -117,10 +134,9 @@ const changeModel = (data: string, user?: {
       password: "",
       phoneNumber: "",
       role: ""
-    }
+    };
   }
-  console.log("userData-----------", userData);
-}
+};
 
 const stopPropagation = (event: Event) => {
   event.stopPropagation();
@@ -218,8 +234,9 @@ const deleteUser = async (_id: string) => {
     console.error('Error deleting user:', error);
   }
 };
-
 </script>
+
+
 
 <template>
   <Headers/>
@@ -232,80 +249,19 @@ const deleteUser = async (_id: string) => {
         <button @click="changeModel('create')" class="button primaryBtn">Create New</button>
       </div>
     </div>
-    <div class="cusTable">
-      <div v-if="pending">Loading...</div>
-      <div v-if="error">{{ error.message }}</div>
-      <div v-if="!pending && !error">
-        <table>
-          <thead>
-          <tr>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Role</th>
-            <th>Edit</th>
-            <th>Delete</th>
-          </tr>
-          </thead>
-          <tbody>
-          <tr v-for="(user, index) in userData.data" :key="index">
-            <td>{{ user.name }}</td>
-            <td>{{ user.email }}</td>
-            <td>{{ user.role }}</td>
-            <td class="cursor-pointer" @click="changeModel('edit', user)">
-              <font-awesome-icon icon="fa-solid fa-pen"/>
-            </td>
-            <td class="cursor-pointer" @click="deleteUser(user.email)">
-              <font-awesome-icon icon="fa-solid fa-trash"/>
-            </td>
-          </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-  <div @click="changeModel('close', false)" v-if="['create', 'edit'].includes(userData.modelType)"
-       class="createEditUser">
-    <div @click="stopPropagation" class="middleModel">
-      <div class="headTitle">Create/Edit User</div>
-      <form @submit.prevent="saveModel">
-        <div>
-          <div class="mt-2 d-flex flex-column">
-            <label>First Name</label>
-            <input type="text" v-model="userData.modelData.firstName"/>
-          </div>
-          <div class="mt-2 d-flex flex-column">
-            <label>Last Name</label>
-            <input type="text" v-model="userData.modelData.lastName"/>
-          </div>
-          <div class="mt-2 d-flex flex-column">
-            <label>Email</label>
-            <input type="email" v-model="userData.modelData.email"/>
-          </div>
-          <div v-if="userData.modelType === 'create'">
-            <div class="mt-2 d-flex flex-column">
-              <label>Password</label>
-              <input type="password" v-model="userData.modelData.password"/>
-            </div>
-            <div class="mt-2 d-flex flex-column">
-              <label>Phone Number</label>
-              <input type="text" v-model="userData.modelData.phoneNumber"/>
-            </div>
-            <div class="mt-2 d-flex flex-column">
-              <label>Role</label>
-              <select name="role" id="" v-model="userData.modelData.role">
-                <option value="admin">Admin</option>
-                <option value="user">User</option>
-              </select>
-            </div>
-          </div>
-        </div>
-        <div class="mt-4 d-flex justify-content-end">
-          <div class="d-flex gap-4">
-            <button @click="changeModel('close')" class="button secondarylite">Cancel</button>
-            <button type="submit" class="button primaryBtn">Save</button>
-          </div>
-        </div>
-      </form>
-    </div>
+    <UserList 
+      :users="userData.data"
+      :pending="pending"
+      :error="error ?? undefined"
+      @edit="changeModel('edit', $event)"
+      @delete="deleteUser"
+    />
+    <UserForm 
+      v-if="['create', 'edit'].includes(userData.modelType)"
+      :model-type="userData.modelType"
+      :model-data="userData.modelData"
+      @close="changeModel('close')"
+      @save="saveModel"
+    />
   </div>
 </template>

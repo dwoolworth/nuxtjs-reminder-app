@@ -1,4 +1,6 @@
 <script setup>
+
+
 import {ref, reactive} from "vue";
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 import {onMounted} from 'vue';
@@ -6,6 +8,7 @@ import {useRouter} from 'vue-router'
 
 const router = useRouter()
 import {useAuthStore} from "~/store/auth.js";
+
 
 const config = useRuntimeConfig()
 const apiBaseUrl = config.public.apiBase || 'http://localhost:3080'
@@ -23,6 +26,8 @@ const position = reactive({
   latitude: 0,
   longitude: 0
 })
+
+
 
 // Function to get current position
 const getCurrentPosition = () => {

@@ -20,7 +20,7 @@ const formSubmit = async () => {
   isLoading.value = true
   try {
     await authStore.login(loginForm.email, loginForm.password)
-    router.push("/home")
+    router.push("/Dashboard")
   } catch (error) {
     console.error("Login failed", error)
     errorMessage.value = error.message || 'Login failed. Please check your credentials and try again.'

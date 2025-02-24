@@ -32,14 +32,14 @@ export const useAuthStore = defineStore('auth', {
 
                 if (error.value) throw new Error(error.value.message || 'Login failed')
 
-                if (data.value && data.value.access_token) {
-                    this.token = data.value.access_token
+                if (data.value && (data.value as LoginResponse).access_token) {
+                    this.token = (data.value as LoginResponse).access_token
                     // You might want to fetch user data here if it's not included in the login response
                     // this.user = ...
                     const cookie = useCookie('token')
-                    cookie.value = data.value.access_token // Set cookie
+                    cookie.value = this.token // Set cookie
                     const router = useRouter()
-                    router.push('home/index') // or wherever you want to redirect after login
+                    router.push('Dashboard') // or wherever you want to redirect after login
 
                 } else {
                     throw new Error('Login failed: No access token received')
