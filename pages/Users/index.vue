@@ -5,7 +5,7 @@ import UserList from "../../components/Users/UserList.vue"
 import UserForm from "../../components/Users/UserForm.vue"
 import { useRuntimeConfig } from '#app'
 import { useCookie } from '#app'
-import type { User, UserApiResponse } from '~/types/user'
+import type { UserApiResponse } from '~/types/user'
 import { onMounted } from 'vue'
 
 import { definePageMeta } from '#imports'
@@ -70,7 +70,6 @@ const fetchUsers = async () => {
   console.log("bearerToken-----", bearerToken);
 
   try {
-    const config = useRuntimeConfig()
     const response = await fetch(`${apiBaseUrl}/api/v1/user`, {
       method: 'GET',
       headers: {
@@ -142,19 +141,19 @@ const stopPropagation = (event: Event) => {
   event.stopPropagation();
 }
 
-const saveModel = async (e: Event) => {
-  e.preventDefault();
+const saveModel = async ({ event, modelData }: { event: Event, modelData: any }) => {
+  event.preventDefault();
   if (userData.modelType === 'create') {
-    await addUser(userData.modelData);
+    await addUser(modelData);
   } else if (userData.modelType === 'edit') {
-    if (userData.modelData._id) {
-      await editUser(userData.modelData);
+    if (modelData._id) {
+      await editUser(modelData);
     } else {
       console.error("User ID is missing for the edit operation.");
     }
   }
   changeModel('close');
-  fetchUsers();
+  await fetchUsers();
 }
 
 
@@ -230,6 +229,8 @@ const deleteUser = async (_id: string) => {
       throw new Error('Failed to delete user');
     }
     console.log('User deleted successfully');
+    // Call fetchUsers after successful deletion
+    await fetchUsers();
   } catch (error) {
     console.error('Error deleting user:', error);
   }
@@ -249,14 +250,14 @@ const deleteUser = async (_id: string) => {
         <button @click="changeModel('create')" class="button primaryBtn">Create New</button>
       </div>
     </div>
-    <UserList 
+    <UserList
       :users="userData.data"
       :pending="pending"
       :error="error ?? undefined"
       @edit="changeModel('edit', $event)"
       @delete="deleteUser"
     />
-    <UserForm 
+    <UserForm
       v-if="['create', 'edit'].includes(userData.modelType)"
       :model-type="userData.modelType"
       :model-data="userData.modelData"
