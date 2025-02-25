@@ -1,15 +1,12 @@
 <script setup>
-import {ref, reactive} from "vue";
-import {library} from '@fortawesome/fontawesome-svg-core';
-import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
-import {fas} from '@fortawesome/free-solid-svg-icons';
-import {onMounted} from 'vue';
-import {useRouter} from 'vue-router'
-
-
+import { ref, reactive, watchEffect } from "vue";
+import { library } from '@fortawesome/fontawesome-svg-core';
+import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+import { fas } from '@fortawesome/free-solid-svg-icons';
+import { useRouter } from 'vue-router'
+import { useAuthStore } from "~/store/auth.js";
 
 const router = useRouter()
-import {useAuthStore} from "~/store/auth.js";
 
 const confirmDialog = ref(null);
 const selectedReminderId = ref(null);
@@ -24,35 +21,35 @@ const totalReminders = ref(0);
 
 const isPopupOpen = ref(false);
 const newReminder = ref({
-  title : ``,
-  notes : ``,
-  dueDate : ``
+  title: ``,
+  notes: ``,
+  dueDate: ``
 })
 
 const inspirationMessage = ref('')
-const weather = ref({weather:[], sys:{}});
+const weather = ref({ weather: [], sys: {} });
 
 library.add(fas);
 
 const weatherIcons = {
-  "01d" : "fas fa-sun",
-  "01n" : "fas fa-moon",
-  "02d" : "fas fa-cloud-sun",
-  "02n" : "fas fa-cloud-moon",
-  "03d" : "fas fa-cloud",
-  "03n" : "fas fa-cloud",
-  "04d" : "fas fa-cloud-meatball",
-  "04n" : "fas fa-cloud-meatball",
-  "09d" : "fas fa-cloud-showers-heavy",
-  "09n" : "fas fa-cloud-showers-heavy",
-  "10d" : "fas fa-cloud-rain",
-  "10n" : "fas fa-cloud-rain",
-  "11d" : "fas fa-bolt",
-  "11n" : "fas fa-bolt",
-  "13d" : "fas fa-snowflake",
-  "13n" : "fas fa-snowflake",
-  "50d" : "fas fa-smog",
-  "50n" : "fas fa-smog"
+  "01d": "fas fa-sun",
+  "01n": "fas fa-moon",
+  "02d": "fas fa-cloud-sun",
+  "02n": "fas fa-cloud-moon",
+  "03d": "fas fa-cloud",
+  "03n": "fas fa-cloud",
+  "04d": "fas fa-cloud-meatball",
+  "04n": "fas fa-cloud-meatball",
+  "09d": "fas fa-cloud-showers-heavy",
+  "09n": "fas fa-cloud-showers-heavy",
+  "10d": "fas fa-cloud-rain",
+  "10n": "fas fa-cloud-rain",
+  "11d": "fas fa-bolt",
+  "11n": "fas fa-bolt",
+  "13d": "fas fa-snowflake",
+  "13n": "fas fa-snowflake",
+  "50d": "fas fa-smog",
+  "50n": "fas fa-smog"
 };
 
 const dateAndTime = ref('')
@@ -61,11 +58,10 @@ const isLoading = ref(false)
 const authStore = useAuthStore()
 const forecast = ref([]);
 
-const position = ref({latitude:null, longitude:null});
+const position = ref({ latitude: null, longitude: null });
 
 // Function to get current position
-const getCurrentPosition = () =>
-{
+const getCurrentPosition = () => {
   return new Promise((resolve, reject) => {
     navigator.geolocation.getCurrentPosition(resolve, reject)
   })
@@ -86,26 +82,22 @@ const openPopup = () => {
 
 const closePopup = () => {
   isPopupOpen.value = false;
-  newReminder.value = {title: ``, dueDate : ``, notes : ``};
+  newReminder.value = { title: ``, dueDate: ``, notes: `` };
 }
 
-const createReminder = async() => {
-
-
-  if(!newReminder.value.title || !newReminder.value.dueDate || !newReminder.value.notes)
-  {
+const createReminder = async () => {
+  if (!newReminder.value.title || !newReminder.value.dueDate || !newReminder.value.notes) {
     return;
   }
 
   try {
-
-    const {data, error} = await useFetch(`${apiBaseUrl}/api/v1/reminder`, {
+    const { data, error } = await useFetch(`${apiBaseUrl}/api/v1/reminder`, {
       method: 'POST',
       body: {
         description: newReminder.value.notes,
         dueDate: newReminder.value.dueDate,
         status: 1,
-        priority : 1
+        priority: 1
       },
       headers: {
         Authorization: `Bearer ${bearerToken}`,
@@ -114,19 +106,12 @@ const createReminder = async() => {
       }
     });
 
-    console.log('API Response -', data.value)
+    if (error.value) throw new Error(error.value.message);
 
-    if(error.value) throw new Error(error.value.message);
+    if (data.value) {
+      const reminderid = data.value._id;
 
-    if(data.value)
-    {
-      const reminderid = data.value._id;//'67bccdcd32c4be52c09a935f'; //data.value._id;
-
-      console.log('API Response ID - ', reminderid)
-      console.log('API Reminder Notes - ', newReminder.value.title)
-
-      const response = await useFetch(`${apiBaseUrl}/api/v1/note/${reminderid}/notes`,
-          {
+      const response = await useFetch(`${apiBaseUrl}/api/v1/note/${reminderid}/notes`, {
         method: 'POST',
         body: {
           title: newReminder.value.title
@@ -138,101 +123,77 @@ const createReminder = async() => {
         }
       });
 
-      if(response.error.value) throw new Error(response.error.value.message);
+      if (response.error.value) throw new Error(response.error.value.message);
 
-      console.log('API notes response - ', response.data.value)
-
-      if(response.data.value)
-      {
+      if (response.data.value) {
         closePopup();
         await fetchReminders();
       } else {
         console.log('Failed to add reminder notes');
       }
     }
-  }catch(error)
-  {
-    console.error('Error creating reminder :', error)
+  } catch (error) {
+    console.error('Error creating reminder:', error)
   }
 };
 
 const fetchForecast = async () => {
-
-  isLoading.value = true;
-
-  const geoPosition = await getCurrentPosition()
-  position.value.latitude = geoPosition.coords.latitude
-  position.value.longitude = geoPosition.coords.longitude
-
-  const apiKey = '56da4a21c8f2a9804194202b7cb98201';
-
   try {
-    const response = await fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${ position.value.latitude}&lon=${position.value.longitude }&units=imperial&appid=${apiKey}`);
-    const data = await response.json();
-
-    const dailyForecast = {};
-    const today = new Date().getDate();
-
-    data.list.forEach((entry) =>
-    {
-      const dateObj = new Date(entry.dt * 1000);
-      const day = dateObj.getDate();
-
-      if(day === today) return;
-
-      const isTomorrow = day === today + 1;
-
-
-    //  const formattedDate = `${dateObj.toLocaleDateString("en-US", { weekday: "long" })}, $(dateObj.getDate()}/$(dateObj.getMonth() + 1}`;
-
-      const formattedDate = isTomorrow? `Tomorrow, ${dateObj.getDate()}/${dateObj.getMonth() + 1}` : `${dateObj.toLocaleDateString("en-US", {weekday : "long" })}, ${dateObj.getDate()}/${dateObj.getMonth() + 1}`;
-
-      if(!dailyForecast[formattedDate])
-      {
-        dailyForecast[formattedDate] =
-            {
-              temp: entry.main.temp,
-              feels_like : entry.main.feels_like,
-              icon: entry.weather[0].icon,
-              description: entry.weather[0].description,
-            };
+    const apiKey = '56da4a21c8f2a9804194202b7cb98201';
+    const { data, error } = await useFetch(`https://api.openweathermap.org/data/2.5/forecast`, {
+      method: 'GET',
+      query: {
+        lat: position.value.latitude,
+        lon: position.value.longitude,
+        units: 'imperial',
+        appid: apiKey
       }
     });
 
-    const forecastEntries = Object.entries(dailyForecast).slice(0, 5);
+    if (error.value) throw new Error(error.value.message);
 
-    forecast.value = forecastEntries;
+    if (data.value) {
+      const dailyForecast = {};
+      const today = new Date().getDate();
+
+      data.value.list.forEach((entry) => {
+        const dateObj = new Date(entry.dt * 1000);
+        const day = dateObj.getDate();
+
+        if (day === today) return;
+
+        const isTomorrow = day === today + 1;
+        const formattedDate = isTomorrow
+            ? `Tomorrow, ${dateObj.getDate()}/${dateObj.getMonth() + 1}`
+            : `${dateObj.toLocaleDateString("en-US", { weekday: "long" })}, ${dateObj.getDate()}/${dateObj.getMonth() + 1}`;
+
+        if (!dailyForecast[formattedDate]) {
+          dailyForecast[formattedDate] = {
+            temp: entry.main.temp,
+            feels_like: entry.main.feels_like,
+            icon: entry.weather[0].icon,
+            description: entry.weather[0].description,
+          };
+        }
+      });
+
+      forecast.value = Object.entries(dailyForecast).slice(0, 5);
+    }
+  } catch (error) {
+    console.error('Failed to fetch forecast:', error);
+    return { success: false, error: 'Failed to fetch forecast' };
   }
-  catch(error)
-  {
-    errorMessage.value = 'Failed to fetch forecast';
-  }
-  finally
-  {
-    isLoading.value = false;
-  }
+  return { success: true };
 };
 
-// Function to fetch inspiration
 const fetchInspiration = async () => {
-  isLoading.value = true
-  errorMessage.value = ''
-
   try {
-    // Get current position
-    const geoPosition = await getCurrentPosition()
-    position.value.latitude = geoPosition.coords.latitude
-    position.value.longitude = geoPosition.coords.longitude
-
-    const config = useRuntimeConfig();
-
-    console.log("Fetch inspiration")
-    const response = await useFetch(`${apiBaseUrl}/api/v1/ai/inspiration`, {
+    const { data, error } = await useFetch(`${apiBaseUrl}/api/v1/ai/inspiration`, {
       method: 'POST',
       body: {
         longitude: position.value.longitude,
         latitude: position.value.latitude
-      },      
+      },
       headers: {
         Authorization: `Bearer ${bearerToken}`,
         'Content-Type': 'application/json',
@@ -240,256 +201,185 @@ const fetchInspiration = async () => {
       }
     });
 
-console.log(response)
-    inspirationMessage.value = response.data.value.inspirationalMessage // Adjust according to your API response structure
-    dateAndTime.value = new Date().toLocaleString() // Current date and time
+    if (error.value) throw new Error(error.value.message);
+
+    if (data.value) {
+      inspirationMessage.value = data.value.inspirationalMessage;
+      dateAndTime.value = new Date().toLocaleString();
+    }
   } catch (error) {
-    console.error('Error fetching inspiration:', error)
-    errorMessage.value = 'Failed to get inspiration. Please try again.'
-  } finally {
-    isLoading.value = false
+    console.error('Failed to fetch inspiration:', error);
+    return { success: false, error: 'Failed to get inspiration' };
   }
-}
+  return { success: true };
+};
 
 const fetchReminders = async () => {
-  isLoading.value = true;
-  errorMessage.value = '';
+  try {
+    const { data, error } = await useFetch(`${apiBaseUrl}/api/v1/reminder/`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${bearerToken}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      }
+    });
 
-  try
-  {
-    // Get current position
-    console.log("Fetch Reminders")
-    console.log(`${apiBaseUrl}/api/v1/reminder/`)
+    if (error.value) throw new Error(error.value.message);
 
-    const {data, error} = await useFetch(`${apiBaseUrl}/api/v1/reminder/`,
-        {
-          method: 'GET',
-          headers:
-              {
-                Authorization: `Bearer ${bearerToken}`,
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-              }
-        });
-
-    if(error.value) throw new Error(error.value.message);
-
-    if(data.value)
-    {
+    if (data.value) {
       totalReminders.value = data.value.total;
-      if(Array.isArray(data.value.reminders))
-      {
+      if (Array.isArray(data.value.reminders)) {
         reminders.value = data.value.reminders;
-        console.log('Loaded Reminders - ', reminders.value)
       }
     }
-
-    console.log('API Response ',  reminders.value)
-
-
-  }catch(error)
-  {
-    errorMessage.value = 'Failed to load reminders';
-    console.log(error);
+  } catch (error) {
+    console.error('Failed to load reminders:', error);
+    return { success: false, error: 'Failed to load reminders' };
   }
-  finally {
-    isLoading.value = false;
-  }
+  return { success: true };
 };
 
 const deleteReminder = async () => {
- // if(!confirm('Are you sure you want to delete this reminder')) return;
-  if(!selectedReminderId.value) return;
+  if (!selectedReminderId.value) return;
   try {
-    const response = await useFetch(`${apiBaseUrl}/api/v1/reminder/${selectedReminderId.value}`,
-        {
-          method: 'DELETE',
-          headers:
-              {
-                Authorization: `Bearer ${bearerToken}`
-              }
-        });
+    const { data, error } = await useFetch(`${apiBaseUrl}/api/v1/reminder/${selectedReminderId.value}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${bearerToken}`
+      }
+    });
 
-    if(response.error.value) throw new Error(response.error.value.message);
+    if (error.value) throw new Error(error.value.message);
 
-    console.log('Delete API Response : ', response.data.value)
-
-    if(response.data.value)
-    {
+    if (data.value) {
       reminders.value = reminders.value.filter(reminder => reminder._id !== selectedReminderId.value);
-      //await fetchReminders();
     } else {
-      console.log('Failed to add reminder notes');
+      console.log('Failed to delete reminder');
     }
-
-   /* if(response.ok)
-    {
-      reminders.value = reminders.value.filter(reminder => reminder._id !== id);
-    }
-    else
-    {
-      console.log('Failed to delete the reminder');
-    }*/
-
-  }catch(error)
-  {
-    console.error('Error deleting reminder : ', error);
-  }finally{
+  } catch (error) {
+    console.error('Error deleting reminder:', error);
+  } finally {
     closeDialog();
   }
 }
 
+const fetchWeatherCard = async () => {
+  try {
+    const { data, error } = await useFetch(`${apiBaseUrl}/api/v1/weather`, {
+      method: 'GET',
+      query: {
+        longitude: position.value.longitude,
+        latitude: position.value.latitude
+      },
+      headers: {
+        Authorization: `Bearer ${bearerToken}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    });
 
-// Function to fetch inspiration
-const fetchWeatherCard = async () =>
-{
-  isLoading.value = true
-  errorMessage.value = ''
+    if (error.value) throw new Error(error.value.message);
 
-  try
-  {
-
-    // Get current position
-    const geoPosition = await getCurrentPosition()
-    position.value.latitude = geoPosition.coords.latitude
-    position.value.longitude = geoPosition.coords.longitude
-
-    const config = useRuntimeConfig()
-    console.log("Fetch WeatherCard")
-    const response = await useFetch(`${apiBaseUrl}/api/v1/weather`,
-        {
-          method: 'GET',
-          query:
-              {
-                longitude: position.value.longitude,
-                latitude: position.value.latitude
-              },
-          headers:
-              {
-                Authorization: `Bearer ${bearerToken}`,
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-              },
-        });
-
-
-
-
-    weather.value = response.data.value || {weather: [], sys: {}};
-
+    if (data.value) {
+      weather.value = data.value || { weather: [], sys: {} };
+    }
+  } catch (error) {
+    console.error('Failed to fetch weather:', error);
+    return { success: false, error: 'Failed to fetch weather' };
   }
-  catch(error)
-  {
-    console.error('Error fetching inspiration:', error)
-    errorMessage.value = error.message || 'Failed to fetch weather. Please try again.'
-  }
-  finally
-  {
-    isLoading.value = false
-  }
+  return { success: true };
 };
 
-
-// Call fetchInspiration when the component is mounted
-onMounted(fetchReminders)
-onMounted(fetchInspiration)
-onMounted(fetchWeatherCard)
-onMounted(fetchForecast)
-
+// Utility functions
 const formatDate = (dateString) => {
-  /*const date = new Date(dateString);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2,'0');
-  return `${year}-${month}-${day}`;*/
-
-  /*const date = new Date(dateString);
-  const options = { year: `numeric`, month: `2-digit`, day:`2-digit`};
-
-  return date.toLocaleDateString('en-CA',options).replace(/\//g,'-');*/
-
   const date = new Date(dateString);
   const localDate = new Date(date.getTime() + date.getTimezoneOffset() * 60000);
 
   const year = localDate.getFullYear();
   const month = String(localDate.getMonth() + 1).padStart(2, '0');
-  const day = String(localDate.getDate()).padStart(2,'0');
+  const day = String(localDate.getDate()).padStart(2, '0');
 
   return `${month}/${day}/${year}`;
 }
 
 const isOverdue = (dueDate) => {
-  /*const currentDate = new Date();
-  return new Date(dueDate) < currentDate;*/
   const today = new Date();
-  today.setUTCHours(0,0,0,0);
+  today.setUTCHours(0, 0, 0, 0);
 
   const due = new Date(dueDate);
-  due.setUTCHours(0,0,0,0);
+  due.setUTCHours(0, 0, 0, 0);
 
   return due < today;
 }
 
-const formatTime = (timestamp) =>
-{
-  if(!timestamp) return 'N/A';
+const formatTime = (timestamp) => {
+  if (!timestamp) return 'N/A';
 
   return new Date(timestamp * 1000).toLocaleTimeString('en-US', {
     hour: '2-digit',
     minute: '2-digit',
     hour12: true
   });
-
 };
 
 const getReminderClass = (dueDate) => {
   return isOverdue(dueDate) ? `overdue-card` : `todo-card`;
 }
 
-
 const getWeatherIconClass = () => {
-  if(!weather.value.weather || !weather.value.weather[0]) return 'fas fa-question-circle';
+  if (!weather.value.weather || !weather.value.weather[0]) return 'fas fa-question-circle';
   return weatherIcons[weather.value.weather[0].icon] || 'fas-fa-question-circle';
- };
+};
 
-const weatherIconUrl= () => {
-  if(!weather.value.weather.length) return '';
+const weatherIconUrl = () => {
+  if (!weather.value.weather.length) return '';
   const iconCode = weather.value.weather[0]?.icon;
 
   return `https://openweathermap.org/img/wn/${iconCode}@4x.png`
 }
 
-const formSubmit = async () => {
+// Initial data fetching
+const fetchInitialData = async () => {
+  const results = await Promise.allSettled([
+    fetchReminders(),
+    fetchInspiration(),
+    fetchWeatherCard(),
+    fetchForecast()
+  ]);
 
-  navigator.geolocation.getCurrentPosition(position => {
-    console.log("position-----", position);
-    let {
-      latitude, longitude
-    } = position.coords;
-    console.log("latitude,   longitude----", latitude, longitude)
-  })
+  results.forEach((result, index) => {
+    if (result.status === 'rejected' || (result.value && !result.value.success)) {
+      const functionNames = ['Reminders', 'Inspiration', 'Weather', 'Forecast'];
+      const errorMessage = result.reason || (result.value && result.value.error) || 'Unknown error';
+      console.error(`Error fetching ${functionNames[index]}: ${errorMessage}`);
+      // You can set specific error messages or handle errors as needed
+    }
+  });
 
-  console.log("dashboard.............");
-
-  errorMessage.value = ''
-  isLoading.value = true
-  try {
-    //await authStore.allReminder();
-    //await authStore.currentWeather();
-
-    // router.push("/home")
-  } catch (error) {
-    console.error("Login failed", error)
-    errorMessage.value = error.message || 'Login failed. Please check your credentials and try again.'
-  } finally {
-    isLoading.value = false
+  // You can set a general error message if any of the fetches failed
+  if (results.some(result => result.status === 'rejected' || (result.value && !result.value.success))) {
+    errorMessage.value = 'Some data could not be loaded. Please refresh or try again later.';
   }
-}
+};
 
-onMounted(() => {
-  formSubmit();
-})
+// Watch for changes in position and refetch data
+watchEffect(() => {
+  if (position.value.latitude && position.value.longitude) {
+    fetchInitialData();
+  }
+});
 
+// Get initial position and fetch data
+getCurrentPosition().then((geoPosition) => {
+  position.value.latitude = geoPosition.coords.latitude;
+  position.value.longitude = geoPosition.coords.longitude;
+}).catch((error) => {
+  console.error('Error getting geolocation:', error);
+  errorMessage.value = 'Failed to get your location. Some features may not work correctly.';
+  // Even if geolocation fails, we still try to fetch data
+  fetchInitialData();
+});
 
 </script>
 

@@ -11,6 +11,7 @@
     "test": "jest --config jest.config.cjs"
   },
   "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^6.7.2",
     "@fortawesome/vue-fontawesome": "^3.0.8",
     "@pinia/nuxt": "^0.10.1",
     "@vesp/nuxt-fontawesome": "^1.2.1",
