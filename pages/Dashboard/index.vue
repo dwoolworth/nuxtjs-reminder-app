@@ -11,6 +11,9 @@ import {useRouter} from 'vue-router'
 const router = useRouter()
 import {useAuthStore} from "~/store/auth.js";
 
+const confirmDialog = ref(null);
+const selectedReminderId = ref(null);
+
 const config = useRuntimeConfig()
 const apiBaseUrl = config.public.apiBase || 'http://localhost:3080'
 const token = useCookie("token")
@@ -18,6 +21,13 @@ const bearerToken = config.public.bearerToken || token.value
 
 const reminders = ref([]);
 const totalReminders = ref(0);
+
+const isPopupOpen = ref(false);
+const newReminder = ref({
+  title : ``,
+  notes : ``,
+  dueDate : ``
+})
 
 const inspirationMessage = ref('')
 const weather = ref({weather:[], sys:{}});
@@ -53,12 +63,6 @@ const forecast = ref([]);
 
 const position = ref({latitude:null, longitude:null});
 
-/*
-const position = reactive({
-  latitude: 0,
-  longitude: 0
-}) */
-
 // Function to get current position
 const getCurrentPosition = () =>
 {
@@ -67,6 +71,90 @@ const getCurrentPosition = () =>
   })
 }
 
+const showConfirmation = (id) => {
+  selectedReminderId.value = id;
+  confirmDialog.value.showModal();
+}
+
+const closeDialog = () => {
+  confirmDialog.value.close();
+}
+
+const openPopup = () => {
+  isPopupOpen.value = true;
+}
+
+const closePopup = () => {
+  isPopupOpen.value = false;
+  newReminder.value = {title: ``, dueDate : ``, notes : ``};
+}
+
+const createReminder = async() => {
+
+
+  if(!newReminder.value.title || !newReminder.value.dueDate || !newReminder.value.notes)
+  {
+    return;
+  }
+
+  try {
+
+    const {data, error} = await useFetch(`${apiBaseUrl}/api/v1/reminder`, {
+      method: 'POST',
+      body: {
+        description: newReminder.value.notes,
+        dueDate: newReminder.value.dueDate,
+        status: 1,
+        priority : 1
+      },
+      headers: {
+        Authorization: `Bearer ${bearerToken}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      }
+    });
+
+    console.log('API Response -', data.value)
+
+    if(error.value) throw new Error(error.value.message);
+
+    if(data.value)
+    {
+      const reminderid = data.value._id;//'67bccdcd32c4be52c09a935f'; //data.value._id;
+
+      console.log('API Response ID - ', reminderid)
+      console.log('API Reminder Notes - ', newReminder.value.title)
+
+      const response = await useFetch(`${apiBaseUrl}/api/v1/note/${reminderid}/notes`,
+          {
+        method: 'POST',
+        body: {
+          title: newReminder.value.title
+        },
+        headers: {
+          Authorization: `Bearer ${bearerToken}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        }
+      });
+
+      if(response.error.value) throw new Error(response.error.value.message);
+
+      console.log('API notes response - ', response.data.value)
+
+      if(response.data.value)
+      {
+        closePopup();
+        await fetchReminders();
+      } else {
+        console.log('Failed to add reminder notes');
+      }
+    }
+  }catch(error)
+  {
+    console.error('Error creating reminder :', error)
+  }
+};
 
 const fetchForecast = async () => {
 
@@ -170,11 +258,6 @@ const fetchReminders = async () => {
   try
   {
     // Get current position
-    const geoPosition = await getCurrentPosition()
-    position.value.latitude = geoPosition.coords.latitude
-    position.value.longitude = geoPosition.coords.longitude
-
-    const config = useRuntimeConfig()
     console.log("Fetch Reminders")
     console.log(`${apiBaseUrl}/api/v1/reminder/`)
 
@@ -189,7 +272,7 @@ const fetchReminders = async () => {
               }
         });
 
-    if(error.value) throw new Error(response.error.value.message);
+    if(error.value) throw new Error(error.value.message);
 
     if(data.value)
     {
@@ -213,6 +296,48 @@ const fetchReminders = async () => {
     isLoading.value = false;
   }
 };
+
+const deleteReminder = async () => {
+ // if(!confirm('Are you sure you want to delete this reminder')) return;
+  if(!selectedReminderId.value) return;
+  try {
+    const response = await useFetch(`${apiBaseUrl}/api/v1/reminder/${selectedReminderId.value}`,
+        {
+          method: 'DELETE',
+          headers:
+              {
+                Authorization: `Bearer ${bearerToken}`
+              }
+        });
+
+    if(response.error.value) throw new Error(response.error.value.message);
+
+    console.log('Delete API Response : ', response.data.value)
+
+    if(response.data.value)
+    {
+      reminders.value = reminders.value.filter(reminder => reminder._id !== selectedReminderId.value);
+      //await fetchReminders();
+    } else {
+      console.log('Failed to add reminder notes');
+    }
+
+   /* if(response.ok)
+    {
+      reminders.value = reminders.value.filter(reminder => reminder._id !== id);
+    }
+    else
+    {
+      console.log('Failed to delete the reminder');
+    }*/
+
+  }catch(error)
+  {
+    console.error('Error deleting reminder : ', error);
+  }finally{
+    closeDialog();
+  }
+}
 
 
 // Function to fetch inspiration
@@ -247,7 +372,8 @@ const fetchWeatherCard = async () =>
               },
         });
 
-    if(response.error.value) throw new Error(response.error.value.message);
+
+
 
     weather.value = response.data.value || {weather: [], sys: {}};
 
@@ -289,12 +415,19 @@ const formatDate = (dateString) => {
   const month = String(localDate.getMonth() + 1).padStart(2, '0');
   const day = String(localDate.getDate()).padStart(2,'0');
 
-  return `${year}-${month}-${day}`;
+  return `${month}/${day}/${year}`;
 }
 
 const isOverdue = (dueDate) => {
-  const currentDate = new Date();
-  return new Date(dueDate) < currentDate;
+  /*const currentDate = new Date();
+  return new Date(dueDate) < currentDate;*/
+  const today = new Date();
+  today.setUTCHours(0,0,0,0);
+
+  const due = new Date(dueDate);
+  due.setUTCHours(0,0,0,0);
+
+  return due < today;
 }
 
 const formatTime = (timestamp) =>
@@ -309,6 +442,9 @@ const formatTime = (timestamp) =>
 
 };
 
+const getReminderClass = (dueDate) => {
+  return isOverdue(dueDate) ? `overdue-card` : `todo-card`;
+}
 
 
 const getWeatherIconClass = () => {
@@ -358,11 +494,93 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.weather-icon{
+.weather-icon
+{
   font-size: 1.5rem;
   color:orange;
   filter: drop-shadow(1px 1px 3px white);
 }
+
+.overdue-card
+{
+  border: 2px solid #EA9494;
+}
+
+
+.overdue {
+  border: 1px solid #900000;
+  background: #ffefea;
+  color: #900000;
+  font-size: 14px;
+  font-weight: 400;
+  border-radius: 4px;
+  padding: 2px 8px;
+
+}
+
+.popup-content h3
+{
+  margin-top : 0;
+}
+
+input,textarea{
+  width : 100%;
+  padding:8px;
+  margin : 5px 0;
+  border : 1px solid #cccccc;
+  border-radius: 5px;
+}
+
+dialog{
+  border: none;
+  border-radius: 8px;
+  padding : 20px;
+  background: white;
+  box-shadow: 0px 4px 10px rgba(0,0,0,0.2);
+  width: 300px;
+  text-align: center;
+}
+
+.dialog-content h3
+{
+  margin-bottom: 10px;
+}
+
+.dialog-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top:20px;
+}
+
+.cancel-btn{
+  background: #ccc;
+  color :black;
+  border: none;
+  padding : 8px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.cancel-btn:hover
+{
+  background:#bbb;
+}
+
+.delete-btn
+{
+  background: red;
+  color:white;
+  border:none;
+  padding:8px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.delete-btn:hover
+{
+  background: darkred;
+}
+
 </style>
 
 <template>
@@ -443,21 +661,61 @@ onMounted(() => {
         </div>
       </div>
 
+      <div v-if="isPopupOpen" class="createEditUser">
+        <div class="middleModel">
+        <div class="headTitle">Create Reminder</div>
+        <form @submit.prevent="createReminder">
+            <div class="mt-2 d-flex flex-column">
+              <label>Title </label>
+              <input v-model="newReminder.title" type="text" required/>
+            </div>
+            <div class="mt-2 d-flex flex-column">
+            <label>Notes </label>
+            <textarea v-model="newReminder.notes" required></textarea>
+            </div>
+            <div class="mt-2 d-flex flex-column">
+            <label>Due Date </label>
+            <input v-model="newReminder.dueDate" type="date" required/>
+              </div>
+
+          <div class="mt-4 d-flex justify-content-end">
+            <div class="d-flex gap-4">
+              <button type="submit" class="button primaryBtn">Save</button>
+              <button @click="closePopup" class="button secondarylite">Cancel</button>
+            </div>
+          </div>
+
+        </form>
+          </div>
+      </div>
+
+      <dialog ref="confirmDialog">
+        <div class="dialog-content">
+          <h3> Are you sure? </h3>
+          <p> Do you really want to delete this reminder ? </p>
+          <div class="dialog-buttons">
+            <button class="cancel-btn" @click="closeDialog">Cancel</button>
+            <button class="delete-btn" @click="deleteReminder">Delete</button>
+          </div>
+        </div>
+      </dialog>
+
+
       <p v-if="isLoading">Loading Reminders....</p>
       <p v-if="errorMessage" class="error"> {{ errorMessage}} </p>
       <div class="w-50 mt-2">
         <div class="d-flex justify-content-between align-items-center ">
           <div class="lite-title">Reminders: {{ totalReminders }}</div>
           <div class="d-flex gap-4">
-            <button class="primarylite button ">Hide Completed</button>
-            <button class="primaryBtn button">Create New</button>
+            <!--<button class="primarylite button ">Hide Completed</button>-->
+            <button @click="openPopup" class="primaryBtn button">Create New</button>
           </div>
         </div>
         <div v-if="reminders.length > 0">
-          <div v-for="reminder in reminders" :key="reminder.id" >
+        <div v-for="reminder in reminders" :key="reminder._id" >
         <div class="mt-4">
-          <div class="my-3 boxReminder p-0">
-            <div class="px-3 py-2  d-flex justify-content-between align-items-center">
+          <div class="my-3 boxReminder p-0" :class="getReminderClass(reminder.dueDate)">
+            <div class="px-3 py-2  d-flex justify-content-between align-items-center" >
               <div class="d-flex align-items-center gap-3">
                 <div><img src="~/assets/img/activeStar.png" alt="activeStar"/></div>
                 <div class="normaltext">{{formatDate(reminder.dueDate)}}</div>
@@ -465,7 +723,7 @@ onMounted(() => {
                 <div v-else class="todo">Todo</div>
               </div>
               <div class="d-flex align-items-center gap-4">
-                <font-awesome-icon icon="fa-solid fa-trash"/>
+                <font-awesome-icon icon="fa-solid fa-trash" @click="showConfirmation(reminder._id)"/>
                 <font-awesome-icon icon="fa-solid fa-list-check"/>
                 <font-awesome-icon icon="fa-solid fa-circle-check"/>
               </div>
