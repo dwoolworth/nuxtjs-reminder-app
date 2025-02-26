@@ -1,14 +1,14 @@
 <script>
 
-import {defineComponent} from "vue";
-import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
+import { defineComponent } from "vue";
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
 const formSubmit = () => {
 
 }
 
 export default defineComponent({
-  components: {FontAwesomeIcon}
+  components: { FontAwesomeIcon }
 })
 </script>
 

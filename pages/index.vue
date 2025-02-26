@@ -1,7 +1,3 @@
-<script setup>
-import LoginForm from '~/components/LoginForm.vue'
-</script>
-
 <template>
   <div class="flexCenter vh-100 relative">
     <div class="leftAbsLogin flexCenter">

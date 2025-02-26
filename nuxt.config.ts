@@ -26,7 +26,14 @@ export default defineNuxtConfig({
   modules: [
     '@vesp/nuxt-fontawesome',
     '@pinia/nuxt',
+    '@nuxtjs/web-vitals'
   ],
+
+  webVitals: {
+    provider: 'log',
+    debug: true,
+    disabled: false
+  },
 
   nitro: {
     devProxy: {
@@ -40,6 +47,30 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       apiBase: process.env.API_BASE_URL || 'http://localhost:3080'
+    }
+  },
+
+  vite: {
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks (id) {
+            // Any modules coming from node_modules
+            if (id.includes('node_modules')) {
+              // For example, put Font Awesome in its own chunk
+              if (id.includes('@fortawesome')) {
+                return 'fontawesome'
+              }
+              // Put Bootstrap in its own chunk
+              if (id.includes('bootstrap')) {
+                return 'bootstrap'
+              }
+              // Everything else: a generic "vendor" chunk
+              return 'vendor'
+            }
+          }
+        }
+      }
     }
   },
 

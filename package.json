@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "nuxt build",
+    "analyze": "nuxi analyze",
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
@@ -11,6 +12,7 @@
   },
   "dependencies": {
     "@fortawesome/vue-fontawesome": "^3.0.8",
+    "@nuxtjs/web-vitals": "^0.2.7",
     "@pinia/nuxt": "^0.10.1",
     "@vesp/nuxt-fontawesome": "^1.2.1",
     "bootstrap": "^5.3.3",
@@ -22,6 +24,7 @@
   "devDependencies": {
     "@fortawesome/free-brands-svg-icons": "^6.7.2",
     "@fortawesome/free-regular-svg-icons": "^6.7.2",
-    "@fortawesome/free-solid-svg-icons": "^6.7.2"
+    "@fortawesome/free-solid-svg-icons": "^6.7.2",
+    "vite-plugin-bundle-analyzer": "^0.0.1"
   }
 }
