@@ -5,18 +5,23 @@ export default defineNuxtConfig({
     compatibilityDate: '2024-11-01',
     devtools: {enabled: true},
 
-    css: ['~/assets/css/main.css',
-        'bootstrap/dist/css/bootstrap.min.css',
+    css: [
+        '~/assets/css/custom-bootstrap.css',
         '@fortawesome/fontawesome-svg-core/styles.css'
     ],
 
     plugins: [
-        {src: '~/plugins/bootstrap.client.ts', mode: 'client'},
         {src: '~/plugins/fontawesome.ts', mode: 'client'}],
-    modules: ['@vesp/nuxt-fontawesome',
+    modules: [
         '@pinia/nuxt',
     ],
-
+    build: {
+        analyze: {
+            analyzerMode: 'static',
+            generateStatsFile: true,
+            openAnalyzer: true,
+        }
+    },
     nitro: {
         devProxy: {
             '/api': {
