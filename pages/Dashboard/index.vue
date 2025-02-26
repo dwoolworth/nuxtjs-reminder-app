@@ -1,15 +1,18 @@
 <script setup>
-import { ref, reactive, watchEffect } from "vue";
-import { library } from '@fortawesome/fontawesome-svg-core';
-import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
-import { fas } from '@fortawesome/free-solid-svg-icons';
-import { useRouter } from 'vue-router'
-import { useAuthStore } from "~/store/auth.js";
+import {ref, reactive, watchEffect, computed} from "vue";
+import {library} from '@fortawesome/fontawesome-svg-core';
+import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
+import {fas} from '@fortawesome/free-solid-svg-icons';
+import {useRouter} from 'vue-router'
+import {useAuthStore} from "~/store/auth.js";
 
 const router = useRouter()
 
 const confirmDialog = ref(null);
 const selectedReminderId = ref(null);
+const hideCompleted = ref(false);
+
+const today = computed(() => new Date().toISOString().split('T')[0]);
 
 const config = useRuntimeConfig()
 const apiBaseUrl = config.public.apiBase || 'http://localhost:3080'
@@ -17,7 +20,7 @@ const token = useCookie("token")
 const bearerToken = config.public.bearerToken || token.value
 
 const reminders = ref([]);
-const totalReminders = ref(0);
+const totalReminders = computed(() => reminders.value.length);
 
 const isPopupOpen = ref(false);
 const newReminder = ref({
@@ -27,7 +30,7 @@ const newReminder = ref({
 })
 
 const inspirationMessage = ref('')
-const weather = ref({ weather: [], sys: {} });
+const weather = ref({weather: [], sys: {}});
 
 library.add(fas);
 
@@ -58,7 +61,7 @@ const isLoading = ref(false)
 const authStore = useAuthStore()
 const forecast = ref([]);
 
-const position = ref({ latitude: null, longitude: null });
+const position = ref({latitude: null, longitude: null});
 
 // Function to get current position
 const getCurrentPosition = () => {
@@ -82,7 +85,7 @@ const openPopup = () => {
 
 const closePopup = () => {
   isPopupOpen.value = false;
-  newReminder.value = { title: ``, dueDate: ``, notes: `` };
+  newReminder.value = {title: ``, dueDate: ``, notes: ``};
 }
 
 const createReminder = async () => {
@@ -240,6 +243,54 @@ const fetchReminders = async () => {
   return { success: true };
 };
 
+const markAsCompleted = async (id) => {
+  try {
+    const {data, error} = await useFetch(`${apiBaseUrl}/api/v1/reminder/${id}`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${bearerToken}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      }
+    });
+
+    if (error.value) throw new Error(error.value.message);
+
+    const currentReminder = data.value;
+
+    if (currentReminder) {
+      const response = await useFetch(`${apiBaseUrl}/api/v1/reminder/${id}`, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${bearerToken}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: {
+          "description": currentReminder.description,
+          "dueDate": currentReminder.dueDate,
+          "status": "COMPLETED",
+          "priority": "true"
+        }
+      });
+
+      if (response.error.value) throw new Error(response.error.value.message);
+
+
+      if (response.data.value) {
+        const reminder = reminders.value.find(r => r._id === id);
+        if (reminder) {
+          reminder.status = 'COMPLETED';
+        }
+      } else {
+        console.log('Failed to add reminder notes');
+      }
+    }
+  } catch (error) {
+    console.error('Error marking reminder as completed', error)
+  }
+}
+
 const deleteReminder = async () => {
   if (!selectedReminderId.value) return;
   try {
@@ -302,6 +353,14 @@ const formatDate = (dateString) => {
 
   return `${month}/${day}/${year}`;
 }
+
+const toggleHideCompleted = () => {
+  hideCompleted.value = !hideCompleted.value;
+}
+
+const filteredReminders = computed(() => {
+  return hideCompleted.value ? reminders.value.filter(reminder => reminder.status !== 'COMPLETED') : reminders.value;
+});
 
 const isOverdue = (dueDate) => {
   const today = new Date();
@@ -384,19 +443,21 @@ getCurrentPosition().then((geoPosition) => {
 </script>
 
 <style scoped>
-.weather-icon
-{
+.completed {
+  text-decoration: line-through;
+  color: gray;
+}
+.completedIcon {
+  color: green;
+}
+.weather-icon {
   font-size: 1.5rem;
-  color:orange;
+  color: orange;
   filter: drop-shadow(1px 1px 3px white);
 }
-
-.overdue-card
-{
+.overdue-card {
   border: 2px solid #EA9494;
 }
-
-
 .overdue {
   border: 1px solid #900000;
   background: #ffefea;
@@ -408,66 +469,61 @@ getCurrentPosition().then((geoPosition) => {
 
 }
 
-.popup-content h3
-{
-  margin-top : 0;
+.popup-content h3 {
+  margin-top: 0;
 }
 
-input,textarea{
-  width : 100%;
-  padding:8px;
-  margin : 5px 0;
-  border : 1px solid #cccccc;
+input, textarea {
+  width: 100%;
+  padding: 8px;
+  margin: 5px 0;
+  border: 1px solid #cccccc;
   border-radius: 5px;
 }
 
-dialog{
+dialog {
   border: none;
   border-radius: 8px;
-  padding : 20px;
+  padding: 20px;
   background: white;
-  box-shadow: 0px 4px 10px rgba(0,0,0,0.2);
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
   width: 300px;
   text-align: center;
 }
 
-.dialog-content h3
-{
+.dialog-content h3 {
   margin-bottom: 10px;
 }
 
 .dialog-buttons {
   display: flex;
   justify-content: space-between;
-  margin-top:20px;
+  margin-top: 20px;
 }
 
-.cancel-btn{
+.cancel-btn {
   background: #ccc;
-  color :black;
+  color: black;
   border: none;
-  padding : 8px 15px;
+  padding: 8px 15px;
   border-radius: 5px;
   cursor: pointer;
 }
 
-.cancel-btn:hover
-{
-  background:#bbb;
+.cancel-btn:hover {
+  background: #bbb;
 }
 
-.delete-btn
-{
+.delete-btn {
   background: red;
-  color:white;
-  border:none;
-  padding:8px 15px;
+  color: white;
+  border: none;
+  padding: 8px 15px;
   border-radius: 5px;
   cursor: pointer;
 }
 
-.delete-btn:hover
-{
+.delete-btn:hover {
   background: darkred;
 }
 
@@ -482,11 +538,11 @@ dialog{
           <div style="width: 60%" class="py-2 w-60 d-flex justify-content-around borderRightLine">
             <div class=" ps-4">
               <div>
-                <p v-if = "isLoading"> Loading Weather ...</p>
-                <p v-if="errorMessage" class="error"> {{errorMessage}}</p>
+                <p v-if="isLoading"> Loading Weather ...</p>
+                <p v-if="errorMessage" class="error"> {{ errorMessage }}</p>
 
                 <div v-if="weather && weather.weather && weather.sys">
-                  <div class="curretTemperature">{{ weather.main?.temp }}°F </div>
+                  <div class="curretTemperature">{{ weather.main?.temp }}°F</div>
                   <div class="normaltext">Feels like: <strong>{{ weather.main?.feels_like }}°F </strong></div>
                 </div>
 
@@ -497,7 +553,7 @@ dialog{
                 <div>
                   <img src="~/assets/img/timecurve.png" alt="timecurve">
                 </div>
-                <div class="normaltext">Sunset: <strong> {{ formatTime(weather.sys?.sunset) }} </strong> </div>
+                <div class="normaltext">Sunset: <strong> {{ formatTime(weather.sys?.sunset) }} </strong></div>
 
               </div>
               <div></div>
@@ -506,7 +562,8 @@ dialog{
               <div class="cityHead">{{ weather?.name }}</div>
               <div>
 
-                <font-awesome-icon :icon="weatherIcons[weather.weather[0]?.icon]" size="4x" color="orange"></font-awesome-icon>
+                <font-awesome-icon :icon="weatherIcons[weather.weather[0]?.icon]" size="4x"
+                                   color="orange"></font-awesome-icon>
 
               </div>
               <div class="cityHead">{{ weather.weather[0]?.description }}</div>
@@ -517,15 +574,15 @@ dialog{
             <div v-if="forecast.length > 0">
               <div v-for="(data,index) in forecast" :key="index" class="forecast-day">
 
-            <div class="d-flex align-items-center justify-content-around p-2 ">
-              <div>
-                <font-awesome-icon :icon="weatherIcons[data[1].icon]" class="weather-icon"></font-awesome-icon>
+                <div class="d-flex align-items-center justify-content-around p-2 ">
+                  <div>
+                    <font-awesome-icon :icon="weatherIcons[data[1].icon]" class="weather-icon"></font-awesome-icon>
 
-              </div>
-              <div class="temp">{{ Math.round(data[1].temp)}}°/{{ Math.round(data[1].feels_like) }}°</div>
-              <div class="label">{{ data[0] }}</div>
-            </div>
+                  </div>
+                  <div class="temp">{{ Math.round(data[1].temp) }}°/{{ Math.round(data[1].feels_like) }}°</div>
+                  <div class="label">{{ data[0] }}</div>
                 </div>
+              </div>
             </div>
 
           </div>
@@ -541,42 +598,42 @@ dialog{
           </div>
           <hr/>
           <div>
-    <p v-if="isLoading">Loading...</p>
-    <p v-else-if="errorMessage">{{ errorMessage }}</p>
-    <div v-else>
-      <p>{{ inspirationMessage }}</p>
-     </div>
-    <button @click="fetchInspiration" :disabled="isLoading">Refresh Inspiration</button>
-  </div>
+            <p v-if="isLoading">Loading...</p>
+            <p v-else-if="errorMessage">{{ errorMessage }}</p>
+            <div v-else>
+              <p>{{ inspirationMessage }}</p>
+            </div>
+            <button @click="fetchInspiration" :disabled="isLoading">Refresh Inspiration</button>
+          </div>
         </div>
       </div>
 
       <div v-if="isPopupOpen" class="createEditUser">
         <div class="middleModel">
-        <div class="headTitle">Create Reminder</div>
-        <form @submit.prevent="createReminder">
+          <div class="headTitle">Create Reminder</div>
+          <form @submit.prevent="createReminder">
             <div class="mt-2 d-flex flex-column">
               <label>Title </label>
               <input v-model="newReminder.title" type="text" required/>
             </div>
             <div class="mt-2 d-flex flex-column">
-            <label>Notes </label>
-            <textarea v-model="newReminder.notes" required></textarea>
+              <label>Notes </label>
+              <textarea v-model="newReminder.notes" required></textarea>
             </div>
             <div class="mt-2 d-flex flex-column">
-            <label>Due Date </label>
-            <input v-model="newReminder.dueDate" type="date" required/>
-              </div>
-
-          <div class="mt-4 d-flex justify-content-end">
-            <div class="d-flex gap-4">
-              <button type="submit" class="button primaryBtn">Save</button>
-              <button @click="closePopup" class="button secondarylite">Cancel</button>
+              <label>Due Date </label>
+              <input v-model="newReminder.dueDate" type="date" :min="today" required/>
             </div>
-          </div>
 
-        </form>
-          </div>
+            <div class="mt-4 d-flex justify-content-end">
+              <div class="d-flex gap-4">
+                <button type="submit" class="button primaryBtn">Save</button>
+                <button @click="closePopup" class="button secondarylite">Cancel</button>
+              </div>
+            </div>
+
+          </form>
+        </div>
       </div>
 
       <dialog ref="confirmDialog">
@@ -592,47 +649,55 @@ dialog{
 
 
       <p v-if="isLoading">Loading Reminders....</p>
-      <p v-if="errorMessage" class="error"> {{ errorMessage}} </p>
+      <p v-if="errorMessage" class="error"> {{ errorMessage }} </p>
       <div class="w-50 mt-2">
         <div class="d-flex justify-content-between align-items-center ">
           <div class="lite-title">Reminders: {{ totalReminders }}</div>
           <div class="d-flex gap-4">
-            <!--<button class="primarylite button ">Hide Completed</button>-->
+            <button class="primarylite button " @click="toggleHideCompleted">
+              {{ hideCompleted ? 'Show Completed' : 'Hide Completed' }}
+            </button>
             <button @click="openPopup" class="primaryBtn button">Create New</button>
           </div>
         </div>
         <div v-if="reminders.length > 0">
-        <div v-for="reminder in reminders" :key="reminder._id" >
-        <div class="mt-4">
-          <div class="my-3 boxReminder p-0" :class="getReminderClass(reminder.dueDate)">
-            <div class="px-3 py-2  d-flex justify-content-between align-items-center" >
-              <div class="d-flex align-items-center gap-3">
-                <div><img src="~/assets/img/activeStar.png" alt="activeStar"/></div>
-                <div class="normaltext">{{formatDate(reminder.dueDate)}}</div>
-                <div v-if="isOverdue(reminder.dueDate)" class="overdue">Overdue</div>
-                <div v-else class="todo">Todo</div>
-              </div>
-              <div class="d-flex align-items-center gap-4">
-                <font-awesome-icon icon="fa-solid fa-trash" @click="showConfirmation(reminder._id)"/>
-                <font-awesome-icon icon="fa-solid fa-list-check"/>
-                <font-awesome-icon icon="fa-solid fa-circle-check"/>
+          <div v-for="reminder in filteredReminders" :key="reminder._id">
+
+            <div class="mt-4">
+              <div class="my-3 boxReminder p-0" :class="getReminderClass(reminder.dueDate)">
+                <div class="px-3 py-2  d-flex justify-content-between align-items-center">
+                  <div class="d-flex align-items-center gap-3">
+                    <div><img src="~/assets/img/activeStar.png" alt="activeStar"/></div>
+                    <div class="normaltext">{{ formatDate(reminder.dueDate) }}</div>
+                    <div v-if="isOverdue(reminder.dueDate)" class="overdue">Overdue</div>
+                    <div v-else-if="reminder.status === 'COMPLETED'"></div>
+                    <div v-else class="todo">Todo</div>
+                  </div>
+                  <div class="d-flex align-items-center gap-4">
+                    <font-awesome-icon icon="fa-solid fa-trash" @click="showConfirmation(reminder._id)"/>
+                    <font-awesome-icon icon="fa-solid fa-list-check"/>
+                    <font-awesome-icon icon="fa-solid fa-circle-check"
+                                       :class="{ completedIcon: reminder.status === 'COMPLETED'}"
+                                       @click="markAsCompleted(reminder._id)"/>
+                  </div>
+                </div>
+                <div class="borderBottomLine"></div>
+                <div class="px-3 py-2 ">
+                  <div class="reminderTitle">
+                <span :class="{completed : reminder.status === 'COMPLETED'}">
+                {{ reminder.notes[0]?.title }}
+                      </span>
+                  </div>
+                  <div class="normaltext">
+                <span :class="{completed : reminder.status === 'COMPLETED'}">
+                  {{ reminder.description }}
+              </span></div>
+                </div>
               </div>
             </div>
-            <div class="borderBottomLine"></div>
-            <div class="px-3 py-2 ">
-              <div class="reminderTitle">
-                {{reminder.notes[0]?.title}}
-              </div>
-              <div class="normaltext">{{reminder.description}}</div>
-            </div>
-          </div>
-
-
-        </div>
           </div>
         </div>
       </div>
-
     </div>
   </div>
 </template>
