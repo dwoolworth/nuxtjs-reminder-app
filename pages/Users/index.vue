@@ -1,17 +1,21 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
+import Headers from "../../components/Headers/index.vue"
+import UserList from "../../components/Users/UserList.vue"
+import UserForm from "../../components/Users/UserForm.vue"
 import { useRuntimeConfig } from '#app'
 import { useCookie } from '#app'
 import type { UserApiResponse } from '~/types/user'
 import { onMounted } from 'vue'
 
-const Headers = defineAsyncComponent(() => import('@/components/Headers/index.vue'))
-const UserList = defineAsyncComponent(() => import('@/components/Users/UserList.vue'))
-const UserForm = defineAsyncComponent(() => import('@/components/Users/UserForm.vue'))
-
+import { definePageMeta } from '#imports'
 definePageMeta({
   middleware: 'auth'
 })
+
+const components = {
+  Headers
+}
 
 interface UserData {
   data: Array<{ _id: string; name: string; email: string; role: string }>;
@@ -232,6 +236,8 @@ const deleteUser = async (_id: string) => {
   }
 };
 </script>
+
+
 
 <template>
   <Headers/>
