@@ -16,7 +16,13 @@ export default defineNuxtConfig({
     modules: ['@vesp/nuxt-fontawesome',
         '@pinia/nuxt',
     ],
-
+    build: {
+    analyze: {
+        analyzerMode: 'static',
+            generateStatsFile: true,
+            openAnalyzer: true,
+        }
+    },
     nitro: {
         devProxy: {
             '/api': {
