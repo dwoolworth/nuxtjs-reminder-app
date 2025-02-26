@@ -6,21 +6,21 @@
     <div class="headerRight">
       <RouterLink class="blackColor" to="/Dashboard">
         <div class="headerHover"><span>
-          <font-awesome-icon icon="fa-solid fa-house"/>
+          <font-awesome-icon :icon="['fas', 'fa-house']"/>
         </span>
           Home
         </div>
       </RouterLink>
       <RouterLink class="blackColor" to="/users">
         <div class="headerHover"><span>
-          <font-awesome-icon icon="fa-solid fa-users"/>
+          <font-awesome-icon :icon="['fas', 'fa-users']"/>
           </span> Users
         </div>
       </RouterLink>
       <RouterLink class="blackColor" to="/">
         <div class="headerHover" @click="handleLogout">
           <span>
-          <font-awesome-icon icon="fa-solid fa-arrow-right-from-bracket"/>
+          <font-awesome-icon :icon="['fas', 'fa-arrow-right-from-bracket']"/>
           </span> Log Out
         </div>
       </RouterLink>

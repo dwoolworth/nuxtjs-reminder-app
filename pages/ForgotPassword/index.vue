@@ -21,7 +21,7 @@ export default defineComponent({
     <div class="loginBox boxShadow">
       <div class="w-100">
         <RouterLink class="link" to="/">
-          <font-awesome-icon icon="fa-solid fa-arrow-left"/>
+          <font-awesome-icon :icon="['fas', 'fa-arrow-left']" />
           Back to Login</RouterLink>
       </div>
       <div class="width75">

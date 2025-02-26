@@ -1,8 +1,5 @@
 <script setup>
 import {ref, reactive, watchEffect, computed} from "vue";
-import {library} from '@fortawesome/fontawesome-svg-core';
-import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
-import {fas} from '@fortawesome/free-solid-svg-icons';
 import {useRouter} from 'vue-router'
 import {useAuthStore} from "~/store/auth.js";
 
@@ -32,27 +29,25 @@ const newReminder = ref({
 const inspirationMessage = ref('')
 const weather = ref({weather: [], sys: {}});
 
-library.add(fas);
-
 const weatherIcons = {
-  "01d": "fas fa-sun",
-  "01n": "fas fa-moon",
-  "02d": "fas fa-cloud-sun",
-  "02n": "fas fa-cloud-moon",
-  "03d": "fas fa-cloud",
-  "03n": "fas fa-cloud",
-  "04d": "fas fa-cloud-meatball",
-  "04n": "fas fa-cloud-meatball",
-  "09d": "fas fa-cloud-showers-heavy",
-  "09n": "fas fa-cloud-showers-heavy",
-  "10d": "fas fa-cloud-rain",
-  "10n": "fas fa-cloud-rain",
-  "11d": "fas fa-bolt",
-  "11n": "fas fa-bolt",
-  "13d": "fas fa-snowflake",
-  "13n": "fas fa-snowflake",
-  "50d": "fas fa-smog",
-  "50n": "fas fa-smog"
+  "01d": ['fas', 'fa-sun'],
+  "01n": ['fas', 'fa-moon'],
+  "02d": ['fas', 'fa-cloud-sun'],
+  "02n": ['fas', 'fa-cloud-moon'],
+  "03d": ['fas', 'fa-cloud'],
+  "03n": ['fas', 'fa-cloud'],
+  "04d": ['fas', 'fa-cloud-meatball'],
+  "04n": ['fas', 'fa-cloud-meatball'],
+  "09d": ['fas', 'fa-cloud-showers-heavy'],
+  "09n": ['fas', 'fa-cloud-showers-heavy'],
+  "10d": ['fas', 'fa-cloud-rain'],
+  "10n": ['fas', 'fa-cloud-rain'],
+  "11d": ['fas', 'fa-bolt'],
+  "11n": ['fas', 'fa-bolt'],
+  "13d": ['fas', 'fa-snowflake'],
+  "13n": ['fas', 'fa-snowflake'],
+  "50d": ['fas', 'fa-smog'],
+  "50n": ['fas', 'fa-smog']
 };
 
 const dateAndTime = ref('')
@@ -563,7 +558,7 @@ dialog {
               <div>
 
                 <font-awesome-icon :icon="weatherIcons[weather.weather[0]?.icon]" size="4x"
-                                   color="orange"></font-awesome-icon>
+                                   color="orange" />
 
               </div>
               <div class="cityHead">{{ weather.weather[0]?.description }}</div>
@@ -576,7 +571,7 @@ dialog {
 
                 <div class="d-flex align-items-center justify-content-around p-2 ">
                   <div>
-                    <font-awesome-icon :icon="weatherIcons[data[1].icon]" class="weather-icon"></font-awesome-icon>
+                    <font-awesome-icon :icon="weatherIcons[data[1].icon]" class="weather-icon" />
 
                   </div>
                   <div class="temp">{{ Math.round(data[1].temp) }}°/{{ Math.round(data[1].feels_like) }}°</div>
@@ -674,11 +669,11 @@ dialog {
                     <div v-else class="todo">Todo</div>
                   </div>
                   <div class="d-flex align-items-center gap-4">
-                    <font-awesome-icon icon="fa-solid fa-trash" @click="showConfirmation(reminder._id)"/>
-                    <font-awesome-icon icon="fa-solid fa-list-check"/>
-                    <font-awesome-icon icon="fa-solid fa-circle-check"
+                    <font-awesome-icon :icon="['fas', 'fa-trash']" @click="showConfirmation(reminder._id)" />
+                    <font-awesome-icon :icon="['fas', 'fa-list-check']" />
+                    <font-awesome-icon :icon="['fas', 'fa-circle-check']"
                                        :class="{ completedIcon: reminder.status === 'COMPLETED'}"
-                                       @click="markAsCompleted(reminder._id)"/>
+                                       @click="markAsCompleted(reminder._id)" />
                   </div>
                 </div>
                 <div class="borderBottomLine"></div>
