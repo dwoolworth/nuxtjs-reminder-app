@@ -1,9 +1,10 @@
 <script setup>
 import { reactive } from 'vue'
 import { useRouter } from 'vue-router'
+const router = useRouter()
+
 import { useAuthStore } from '~/store/auth'  // Assuming you have this store
 
-const router = useRouter()
 const authStore = useAuthStore()
 
 const loginForm = reactive({
@@ -19,7 +20,7 @@ const formSubmit = async () => {
   isLoading.value = true
   try {
     await authStore.login(loginForm.email, loginForm.password)
-    router.push("/home")
+    router.push("/Dashboard")
   } catch (error) {
     console.error("Login failed", error)
     errorMessage.value = error.message || 'Login failed. Please check your credentials and try again.'

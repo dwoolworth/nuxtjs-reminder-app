@@ -4,13 +4,16 @@
   "type": "module",
   "scripts": {
     "build": "nuxt build",
-    "analyze": "nuxi analyze",
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "test": "jest --config jest.config.cjs",
+    "build:analyze": "nuxt build --analyze",
+    "analyze": "nuxt analyze"
   },
   "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^6.7.2",
     "@fortawesome/vue-fontawesome": "^3.0.8",
     "@nuxtjs/web-vitals": "^0.2.7",
     "@pinia/nuxt": "^0.10.1",
@@ -18,13 +21,23 @@
     "bootstrap": "^5.3.3",
     "nuxt": "^3.15.4",
     "pinia": "^3.0.1",
-    "vue": "latest",
     "vue-router": "latest"
   },
   "devDependencies": {
+    "@babel/core": "^7.26.9",
+    "@babel/plugin-transform-modules-commonjs": "^7.26.3",
+    "@babel/preset-env": "^7.26.9",
     "@fortawesome/free-brands-svg-icons": "^6.7.2",
     "@fortawesome/free-regular-svg-icons": "^6.7.2",
     "@fortawesome/free-solid-svg-icons": "^6.7.2",
-    "vite-plugin-bundle-analyzer": "^0.0.1"
+    "@nuxt/types": "^2.18.1",
+    "@pinia/testing": "^1.0.0",
+    "@types/bootstrap": "^5.2.10",
+    "@vue/test-utils": "^2.4.0-alpha.2",
+    "@vue/vue3-jest": "^29.2.6",
+    "babel-jest": "^29.7.0",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "vue": "^3.5.13"
   }
 }

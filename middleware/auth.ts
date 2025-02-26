@@ -8,8 +8,9 @@ export default defineNuxtRouteMiddleware((to, from) => {
     }
 
   // Allow access to home page if logged in
+  console.log(authStore.isLoggedIn)
   if (authStore.isLoggedIn && to.path === '/login') {
-    return navigateTo('/home')
+    return navigateTo('/Dashboard')
   }
 
   })
