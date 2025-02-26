@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col items-center">
+  <div class="flex flex-row gap-1">
     <WeatherCard />
     <ReminderList />
   </div>

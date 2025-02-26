@@ -1,16 +1,7 @@
-<script setup lang="ts">
-  import Dashboard from "~/components/DashboardPage.vue";
-  definePageMeta({
-    layout: "default",
-  });
-  definePageMeta({
-    middleware: "auth",
-  })
-</script>
+<script setup>
+import { definePageMeta } from '#app'
 
-<template>
-  <div>
-    <nuxt-route-announcer />
-    <Dashboard />
-  </div>
-</template>
+definePageMeta({
+  middleware: 'auth'
+})
+</script>
