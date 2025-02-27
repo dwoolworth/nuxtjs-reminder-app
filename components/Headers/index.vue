@@ -38,7 +38,6 @@ const handleLogout = () => {
   authStore.logout() // Call the store's logout method
 }
 
-import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 </script>
 
 <style scoped>

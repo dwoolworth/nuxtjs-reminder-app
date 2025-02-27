@@ -1,7 +1,6 @@
 <script>
 
 import { defineComponent } from "vue";
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
 const formSubmit = () => {
 
