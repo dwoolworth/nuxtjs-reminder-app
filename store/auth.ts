@@ -20,7 +20,7 @@ export const useAuthStore = defineStore('auth', {
         async login(email: string, password: string) {
             const config = useRuntimeConfig()
             try {
-                const {data, error} = await useFetch('/api/v1/auth/login', {
+                const data = await $fetch('/api/v1/auth/login', {
                     baseURL: config.public.apiBase,
                     method: 'POST',
                     body: {email, password},
@@ -29,11 +29,8 @@ export const useAuthStore = defineStore('auth', {
                         'Accept': 'application/json',
                     },
                 })
-
-                if (error.value) throw new Error(error.value.message || 'Login failed')
-
-                if (data.value && (data.value as LoginResponse).access_token) {
-                    this.token = (data.value as LoginResponse).access_token
+                if (data && (data as LoginResponse).access_token) {
+                    this.token = (data as LoginResponse).access_token
                     // You might want to fetch user data here if it's not included in the login response
                     // this.user = ...
                     const cookie = useCookie('token')
@@ -52,7 +49,7 @@ export const useAuthStore = defineStore('auth', {
         async allReminder() {
             const config = useRuntimeConfig()
             try {
-                const {data, error} = await useFetch('https://jsonplaceholder.typicode.com/todos', {
+                const data = await $fetch('https://jsonplaceholder.typicode.com/todos', {
                     // baseURL: config.public.apiBase,
                     method: 'GET',
                     headers: {
@@ -62,9 +59,7 @@ export const useAuthStore = defineStore('auth', {
                     },
                 });
 
-                if (error.value) throw new Error(error.value.message || 'Login failed')
-
-                console.log("allReminder-------data-----", data, data.value);
+                console.log("allReminder-------data-----", data);
 
                 // if (data.value && data.value.access_token) {
                 //     this.token = data.value.access_token
@@ -78,7 +73,7 @@ export const useAuthStore = defineStore('auth', {
                 // } else {
                 //     throw new Error('Login failed: No access token received')
                 // }
-                return data.value;
+                return data;
 
             } catch (err) {
                 console.error('Login error:', err)
@@ -89,10 +84,7 @@ export const useAuthStore = defineStore('auth', {
         async currentWeather() {
             const config = useRuntimeConfig()
             try {
-                const {
-                    data,
-                    error
-                } = await useFetch('https://api.openweathermap.org/data/2.5/weather?lat=28.50&lon=77.38&appid=9fe6458d6cc9f452028ba1ce6f826672', {
+                const data = await $fetch('https://api.openweathermap.org/data/2.5/weather?lat=28.50&lon=77.38&appid=9fe6458d6cc9f452028ba1ce6f826672', {
                     // baseURL: config.public.apiBase,
                     method: 'GET',
                     headers: {
@@ -102,9 +94,7 @@ export const useAuthStore = defineStore('auth', {
                     },
                 });
 
-                if (error.value) throw new Error(error.value.message || 'Login failed')
-
-                console.log("allReminder-------data-----", data, data.value);
+                console.log("allReminder-------data-----", data);
 
                 // if (data.value && data.value.access_token) {
                 //     this.token = data.value.access_token
@@ -118,7 +108,7 @@ export const useAuthStore = defineStore('auth', {
                 // } else {
                 //     throw new Error('Login failed: No access token received')
                 // }
-                return data.value;
+                return data;
 
             } catch (err) {
                 console.error('Login error:', err)

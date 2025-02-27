@@ -14,14 +14,24 @@ export default defineNuxtConfig({
 
   ssr: false,
 
+  app: {
+    head: {
+      link: [
+        { rel: 'stylesheet', href: 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css' }
+      ],
+      script: [
+        // Optionally, the Bootstrap JS bundle (if you need modals, dropdowns, etc.)
+        { src: 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js' }
+      ]
+    }
+  },
+
   css: [
     '~/assets/css/main.css',
-    'bootstrap/dist/css/bootstrap.min.css',
     '@fortawesome/fontawesome-svg-core/styles.css'
   ],
 
   plugins: [
-    { src: '~/plugins/bootstrap.client.ts', mode: 'client' },
     { src: '~/plugins/fontawesome.ts', mode: 'client' }
   ],
 
@@ -63,10 +73,6 @@ export default defineNuxtConfig({
               // For example, put Font Awesome in its own chunk
               if (id.includes('@fortawesome')) {
                 return 'fontawesome'
-              }
-              // Put Bootstrap in its own chunk
-              if (id.includes('bootstrap')) {
-                return 'bootstrap'
               }
               // Everything else: a generic "vendor" chunk
               return 'vendor'

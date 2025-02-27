@@ -89,7 +89,7 @@ const createReminder = async () => {
   }
 
   try {
-    const { data, error } = await useFetch(`${apiBaseUrl}/api/v1/reminder`, {
+    const data = await $fetch(`${apiBaseUrl}/api/v1/reminder`, {
       method: 'POST',
       body: {
         description: newReminder.value.notes,
@@ -104,12 +104,9 @@ const createReminder = async () => {
       }
     });
 
-    if (error.value) throw new Error(error.value.message);
-
-    if (data.value) {
-      const reminderid = data.value._id;
-
-      const response = await useFetch(`${apiBaseUrl}/api/v1/note/${reminderid}/notes`, {
+    if (data) {
+      const reminderid = data._id;
+      const resp = await $fetch(`${apiBaseUrl}/api/v1/note/${reminderid}/notes`, {
         method: 'POST',
         body: {
           title: newReminder.value.title
@@ -120,10 +117,7 @@ const createReminder = async () => {
           'Accept': 'application/json',
         }
       });
-
-      if (response.error.value) throw new Error(response.error.value.message);
-
-      if (response.data.value) {
+      if (resp) {
         closePopup();
         await fetchReminders();
       } else {
@@ -138,7 +132,7 @@ const createReminder = async () => {
 const fetchForecast = async () => {
   try {
     const apiKey = '56da4a21c8f2a9804194202b7cb98201';
-    const { data, error } = await useFetch(`https://api.openweathermap.org/data/2.5/forecast`, {
+    const data = await $fetch(`https://api.openweathermap.org/data/2.5/forecast`, {
       method: 'GET',
       query: {
         lat: position.value.latitude,
@@ -147,14 +141,11 @@ const fetchForecast = async () => {
         appid: apiKey
       }
     });
-
-    if (error.value) throw new Error(error.value.message);
-
-    if (data.value) {
+    if (data) {
       const dailyForecast = {};
       const today = new Date().getDate();
 
-      data.value.list.forEach((entry) => {
+      data.list.forEach((entry) => {
         const dateObj = new Date(entry.dt * 1000);
         const day = dateObj.getDate();
 
@@ -186,7 +177,7 @@ const fetchForecast = async () => {
 
 const fetchInspiration = async () => {
   try {
-    const { data, error } = await useFetch(`${apiBaseUrl}/api/v1/ai/inspiration`, {
+    const data = await $fetch(`${apiBaseUrl}/api/v1/ai/inspiration`, {
       method: 'POST',
       body: {
         longitude: position.value.longitude,
@@ -198,11 +189,8 @@ const fetchInspiration = async () => {
         'Accept': 'application/json',
       }
     });
-
-    if (error.value) throw new Error(error.value.message);
-
-    if (data.value) {
-      inspirationMessage.value = data.value.inspirationalMessage;
+    if (data) {
+      inspirationMessage.value = data.inspirationalMessage;
       dateAndTime.value = new Date().toLocaleString();
     }
   } catch (error) {
@@ -214,7 +202,7 @@ const fetchInspiration = async () => {
 
 const fetchReminders = async () => {
   try {
-    const { data, error } = await useFetch(`${apiBaseUrl}/api/v1/reminder/`, {
+    const data = await $fetch(`${apiBaseUrl}/api/v1/reminder/`, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${bearerToken}`,
@@ -222,13 +210,12 @@ const fetchReminders = async () => {
         'Accept': 'application/json'
       }
     });
-
-    if (error.value) throw new Error(error.value.message);
-
-    if (data.value) {
-      totalReminders.value = data.value.total;
-      if (Array.isArray(data.value.reminders)) {
-        reminders.value = data.value.reminders;
+    if (data) {
+      // You cannot "set" a computed property but since reminders.length is this computed property,
+      // it will update whenever reminders.value is updated.
+      // totalReminders.value = data.total;
+      if (Array.isArray(data.reminders)) {
+        reminders.value = data.reminders;
       }
     }
   } catch (error) {
@@ -240,7 +227,7 @@ const fetchReminders = async () => {
 
 const markAsCompleted = async (id) => {
   try {
-    const {data, error} = await useFetch(`${apiBaseUrl}/api/v1/reminder/${id}`, {
+    const currentReminder = await $fetch(`${apiBaseUrl}/api/v1/reminder/${id}`, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${bearerToken}`,
@@ -248,13 +235,8 @@ const markAsCompleted = async (id) => {
         'Accept': 'application/json'
       }
     });
-
-    if (error.value) throw new Error(error.value.message);
-
-    const currentReminder = data.value;
-
     if (currentReminder) {
-      const response = await useFetch(`${apiBaseUrl}/api/v1/reminder/${id}`, {
+      const updatedReminder = await $fetch(`${apiBaseUrl}/api/v1/reminder/${id}`, {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${bearerToken}`,
@@ -268,11 +250,7 @@ const markAsCompleted = async (id) => {
           "priority": "true"
         }
       });
-
-      if (response.error.value) throw new Error(response.error.value.message);
-
-
-      if (response.data.value) {
+      if (updatedReminder) {
         const reminder = reminders.value.find(r => r._id === id);
         if (reminder) {
           reminder.status = 'COMPLETED';
@@ -289,16 +267,13 @@ const markAsCompleted = async (id) => {
 const deleteReminder = async () => {
   if (!selectedReminderId.value) return;
   try {
-    const { data, error } = await useFetch(`${apiBaseUrl}/api/v1/reminder/${selectedReminderId.value}`, {
+    const data = await $fetch(`${apiBaseUrl}/api/v1/reminder/${selectedReminderId.value}`, {
       method: 'DELETE',
       headers: {
         Authorization: `Bearer ${bearerToken}`
       }
     });
-
-    if (error.value) throw new Error(error.value.message);
-
-    if (data.value) {
+    if (data) {
       reminders.value = reminders.value.filter(reminder => reminder._id !== selectedReminderId.value);
     } else {
       console.log('Failed to delete reminder');
@@ -312,7 +287,7 @@ const deleteReminder = async () => {
 
 const fetchWeatherCard = async () => {
   try {
-    const { data, error } = await useFetch(`${apiBaseUrl}/api/v1/weather`, {
+    const data = await $fetch(`${apiBaseUrl}/api/v1/weather`, {
       method: 'GET',
       query: {
         longitude: position.value.longitude,
@@ -324,11 +299,8 @@ const fetchWeatherCard = async () => {
         'Accept': 'application/json',
       },
     });
-
-    if (error.value) throw new Error(error.value.message);
-
-    if (data.value) {
-      weather.value = data.value || { weather: [], sys: {} };
+    if (data) {
+      weather.value = data || { weather: [], sys: {} };
     }
   } catch (error) {
     console.error('Failed to fetch weather:', error);
@@ -556,9 +528,7 @@ dialog {
             <div class=" d-flex align-items-center justify-content-around flex-column">
               <div class="cityHead">{{ weather?.name }}</div>
               <div>
-
-                <font-awesome-icon :icon="weatherIcons[weather.weather[0]?.icon]" size="4x"
-                                   color="orange" />
+                <font-awesome-icon :icon="weatherIcons[weather.weather[0]?.icon] || ['fas', 'fa-circle-check']" size="4x" color="orange" />
 
               </div>
               <div class="cityHead">{{ weather.weather[0]?.description }}</div>
@@ -571,8 +541,7 @@ dialog {
 
                 <div class="d-flex align-items-center justify-content-around p-2 ">
                   <div>
-                    <font-awesome-icon :icon="weatherIcons[data[1].icon]" class="weather-icon" />
-
+                    <font-awesome-icon :icon="weatherIcons[data[1].icon] || ['fas', 'fa-circle-check']" class="weather-icon" />
                   </div>
                   <div class="temp">{{ Math.round(data[1].temp) }}°/{{ Math.round(data[1].feels_like) }}°</div>
                   <div class="label">{{ data[0] }}</div>
@@ -593,10 +562,10 @@ dialog {
           </div>
           <hr/>
           <div>
-            <p v-if="isLoading">Loading...</p>
+            <p v-if="isLoading" class="normaltext">Loading...</p>
             <p v-else-if="errorMessage">{{ errorMessage }}</p>
             <div v-else>
-              <p>{{ inspirationMessage }}</p>
+              <p class="normaltext">{{ inspirationMessage }}</p>
             </div>
             <button @click="fetchInspiration" :disabled="isLoading">Refresh Inspiration</button>
           </div>
